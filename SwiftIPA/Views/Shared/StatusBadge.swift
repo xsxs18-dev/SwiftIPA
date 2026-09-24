@@ -1,15 +1,21 @@
 import SwiftUI
 
 struct StatusBadge: View {
+    enum Style {
+        case tinted
+        case plain
+    }
+
     let text: String
     let color: Color
+    var style: Style = .tinted
 
     var body: some View {
         Text(text)
-            .font(.caption2.weight(.semibold))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(color.opacity(0.18))
+            .font(.caption2.weight(.medium))
+            .padding(.horizontal, style == .tinted ? 7 : 0)
+            .padding(.vertical, 2)
+            .background(style == .tinted ? color.opacity(0.14) : .clear)
             .foregroundStyle(color)
             .clipShape(Capsule())
     }

@@ -50,21 +50,14 @@ struct CertificatesView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: SISpacing.md) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(SIColor.accent)
-            Text("No certificates yet")
-                .font(SIFont.headline)
-            Text("Import a .p12 and its matching .mobileprovision to start signing.")
-                .font(SIFont.body)
-                .foregroundStyle(SIColor.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, SISpacing.xl)
+        SIEmptyState(
+            systemImage: "checkmark.seal",
+            title: "No certificates yet",
+            message: "Import a .p12 and its matching .mobileprovision to start signing."
+        ) {
             Button("Add Certificate") { showingAddSheet = true }
                 .buttonStyle(.siPrimary)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -74,10 +67,10 @@ struct CertificateRow: View {
 
     var body: some View {
         HStack(spacing: SISpacing.md) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.title2)
+            Image(systemName: "checkmark.seal")
+                .font(.title3)
                 .foregroundStyle(SIColor.accent)
-                .frame(width: 36)
+                .frame(width: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
