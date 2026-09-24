@@ -81,7 +81,9 @@ final class AppLibraryStore: ObservableObject {
         )
     }
 
-    func markSigned(_ entryID: UUID, signedIPAURL: URL, options: SigningOptions, certificateID: UUID) async throws {
+    /// `bundleIdentifier` is the ID the app was actually signed with. It's nil
+    /// when the result came from the cache, then it gets worked out again here.
+    func markSigned(_ entryID: UUID, signedIPAURL: URL, bundleIdentifier: String?, options: SigningOptions, certificateID: UUID) async throws {
         guard let destination = await MainActor.run(body: { apps.first(where: { $0.id == entryID }).map(ipaURL) }) else { return }
 
         try await Task.detached(priority: .userInitiated) {
@@ -95,7 +97,14 @@ final class AppLibraryStore: ObservableObject {
             apps[index].byteSize = size
             apps[index].signedAt = Date()
             apps[index].certificateID = certificateID
-            apps[index].bundleIdentifier = options.resolvedBundleIdentifier(original: apps[index].originalBundleIdentifier ?? apps[index].bundleIdentifier)
+            if let bundleIdentifier {
+                apps[index].bundleIdentifier = bundleIdentifier
+            } else if options.bundleIdentifierRule != .randomSuffix {
+                apps[index].bundleIdentifier = options.resolvedBundleIdentifier(
+                    original: apps[index].originalBundleIdentifier ?? apps[index].bundleIdentifier,
+                    certificateBundleID: CertificateStore.shared.profileBundleIdentifier(forCertificateID: certificateID)
+                )
+            }
             if !options.displayName.isEmpty { apps[index].name = options.displayName }
             if !options.version.isEmpty { apps[index].version = options.version }
             if !options.build.isEmpty { apps[index].build = options.build }

@@ -19,9 +19,13 @@ struct DefaultSigningOptionsView: View {
                         .textInputAutocapitalization(.never)
                 }
             } header: {
-                Label("Identity", systemImage: "person.text.rectangle.fill")
+                Text("Identity")
             } footer: {
-                Text("Applies to every app you sign unless you change it for that sign, or a preset overrides it.")
+                if defaultsStore.options.bundleIdentifierRule == .fromCertificate {
+                    Text("Uses the bundle ID from the provisioning profile of the certificate you sign with. Wildcard profiles keep the app's own ID.")
+                } else {
+                    Text("Applies to every app you sign unless you change it for that sign, or a preset overrides it.")
+                }
             }
 
             SigningOptionsEditor(options: $defaultsStore.options, certificateID: nil, showsInstallToggle: true)

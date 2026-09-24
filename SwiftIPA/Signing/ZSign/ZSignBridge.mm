@@ -150,7 +150,7 @@
             removedDylibs,
             options.forceSign,
             options.weakInject,
-            true,
+            false, // zsign's own cache is keyed by folder path, which is new every sign
             options.removeProvisionAfterSigning
         );
     }];
