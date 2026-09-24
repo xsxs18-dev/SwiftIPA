@@ -34,10 +34,9 @@ struct SigningSheetView: View {
                         progressSection
                             .transition(.opacity.combined(with: .move(edge: .top)))
                     }
-                    presetSection
                     certificateSection
                     identitySection(entry: entry)
-                    SigningOptionsEditor(options: $options, certificateID: certificateID)
+                    SigningOptionsEditor(options: $options, certificateID: certificateID, layout: .compact)
                 }
             }
             .animation(.easeOut(duration: 0.25), value: isSigning)
@@ -49,6 +48,9 @@ struct SigningSheetView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    presetMenu
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
@@ -77,25 +79,16 @@ struct SigningSheetView: View {
         }
     }
 
-    private var presetSection: some View {
-        Section {
-            if presetStore.presets.isEmpty {
-                Text("No saved presets yet. Configure signing below, then save it as a preset.")
-                    .font(SIFont.caption)
-                    .foregroundStyle(SIColor.textSecondary)
-            } else {
-                Picker("Load Preset", selection: Binding<UUID?>(
-                    get: { nil },
-                    set: { id in
-                        guard let id, let preset = presetStore.presets.first(where: { $0.id == id }) else { return }
-                        options = preset.options
-                        certificateID = preset.certificateID ?? certificateID
-                        presetStore.markUsed(preset)
-                    }
-                )) {
-                    Text("Choose a preset").tag(UUID?.none)
+    private var presetMenu: some View {
+        Menu {
+            if !presetStore.presets.isEmpty {
+                Section("Load Preset") {
                     ForEach(presetStore.presets) { preset in
-                        Text(preset.name).tag(UUID?.some(preset.id))
+                        Button(preset.name) {
+                            options = preset.options
+                            certificateID = preset.certificateID ?? certificateID
+                            presetStore.markUsed(preset)
+                        }
                     }
                 }
             }
@@ -104,9 +97,10 @@ struct SigningSheetView: View {
             } label: {
                 Label("Save Current as Preset", systemImage: "square.and.arrow.down.on.square")
             }
-        } header: {
-            Label("Presets", systemImage: "slider.horizontal.3")
+        } label: {
+            Image(systemName: "slider.horizontal.3")
         }
+        .accessibilityLabel(Text("Presets"))
     }
 
     private var certificateSection: some View {
@@ -118,20 +112,21 @@ struct SigningSheetView: View {
             } else {
                 Picker("Certificate", selection: $certificateID) {
                     ForEach(certificateStore.certificates) { certificate in
-                        HStack {
-                            Text(certificate.name)
-                        }
-                        .tag(UUID?.some(certificate.id))
+                        Text(certificate.name)
+                            .tag(UUID?.some(certificate.id))
                     }
                 }
             }
-        } header: {
-            Label("Certificate", systemImage: "checkmark.seal.fill")
         }
     }
 
+    private var certificateBundleID: String? {
+        certificateStore.profileBundleIdentifier(forCertificateID: certificateID)
+    }
+
     private func identitySection(entry: AppEntry) -> some View {
-        Section {
+        let original = entry.originalBundleIdentifier ?? entry.bundleIdentifier
+        return Section {
             TextField("Display Name", text: $options.displayName)
                 .autocorrectionDisabled()
 
@@ -150,6 +145,13 @@ struct SigningSheetView: View {
                 TextField("com.example.app", text: $options.bundleIdentifier)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
+                if let certificateBundleID {
+                    Button {
+                        options.bundleIdentifier = SigningOptions.bundleIdentifier(fromCertificateID: certificateBundleID, original: original)
+                    } label: {
+                        Label("Use Bundle ID from Certificate", systemImage: "checkmark.seal")
+                    }
+                }
             default:
                 EmptyView()
             }
@@ -164,9 +166,32 @@ struct SigningSheetView: View {
             TextField("Minimum iOS Version", text: $options.minimumOSVersion)
                 .keyboardType(.numbersAndPunctuation)
         } header: {
-            Label("Identity", systemImage: "person.text.rectangle.fill")
+            Text("Identity")
         } footer: {
-            Text("Original bundle ID: \(entry.originalBundleIdentifier ?? entry.bundleIdentifier)")
+            identityFooter(original: original)
+        }
+    }
+
+    @ViewBuilder
+    private func identityFooter(original: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if options.bundleIdentifierRule == .randomSuffix {
+                Text("Original bundle ID: \(original)")
+            } else {
+                let resolved = options.resolvedBundleIdentifier(original: original, certificateBundleID: certificateBundleID)
+                Text("Signs as: \(resolved)")
+                if resolved != original {
+                    Text("Original bundle ID: \(original)")
+                }
+            }
+            if let certificateBundleID {
+                Text("Certificate bundle ID: \(certificateBundleID)")
+                if options.bundleIdentifierRule == .fromCertificate, certificateBundleID == "*" {
+                    Text("This certificate is a wildcard, so the original bundle ID is kept.")
+                }
+            } else if options.bundleIdentifierRule == .fromCertificate {
+                Text("Couldn't read a bundle ID from this certificate's profile, so the original is kept.")
+            }
         }
     }
 
@@ -180,8 +205,6 @@ struct SigningSheetView: View {
                     .transition(.opacity)
             }
             .animation(.easeOut(duration: 0.2), value: jobStatus)
-        } header: {
-            Label("Progress", systemImage: "bolt.fill")
         }
     }
 
