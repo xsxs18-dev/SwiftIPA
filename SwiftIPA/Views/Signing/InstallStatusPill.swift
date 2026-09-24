@@ -44,11 +44,7 @@ struct InstallStatusPill: View {
         .padding(SISpacing.md)
         .background(SIColor.surfaceElevated)
         .clipShape(RoundedRectangle(cornerRadius: SIRadius.lg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SIRadius.lg, style: .continuous)
-                .stroke(SIColor.border, lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.3), radius: 16, x: 0, y: 6)
+        .shadow(color: .black.opacity(0.18), radius: 12, x: 0, y: 4)
         .padding(.horizontal, SISpacing.md)
         .padding(.bottom, SISpacing.sm)
         .animation(.easeOut(duration: 0.25), value: status)

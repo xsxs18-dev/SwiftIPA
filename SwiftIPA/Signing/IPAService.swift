@@ -48,13 +48,13 @@ struct AppMetadata {
 }
 
 enum IPAService {
-    static func extract(ipaURL: URL) throws -> ExtractedApp {
+    static func extract(ipaURL: URL, verifyChecksums: Bool = true) throws -> ExtractedApp {
         let fileManager = FileManager.default
         let root = fileManager.temporaryDirectory.appendingPathComponent("swiftipa-\(UUID().uuidString)", isDirectory: true)
         try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
 
         do {
-            try fileManager.unzipItem(at: ipaURL, to: root)
+            try fileManager.unzipItem(at: ipaURL, to: root, skipCRC32: !verifyChecksums)
         } catch {
             try? fileManager.removeItem(at: root)
             throw IPAServiceError.extractionFailed
@@ -166,13 +166,15 @@ enum IPAService {
         return try? Data(contentsOf: iconURL)
     }
 
-    static func repack(extracted: ExtractedApp, to destination: URL) throws {
+    /// `compress: false` stores files without deflate. The IPA gets bigger but
+    /// packing is several times faster, which matters most for large apps.
+    static func repack(extracted: ExtractedApp, to destination: URL, compress: Bool = true) throws {
         let fileManager = FileManager.default
         if fileManager.fileExists(atPath: destination.path) {
             try fileManager.removeItem(at: destination)
         }
         do {
-            try fileManager.zipItem(at: extracted.payloadFolder, to: destination, shouldKeepParent: true, compressionMethod: .deflate)
+            try fileManager.zipItem(at: extracted.payloadFolder, to: destination, shouldKeepParent: true, compressionMethod: compress ? .deflate : .none)
         } catch {
             throw IPAServiceError.repackFailed
         }

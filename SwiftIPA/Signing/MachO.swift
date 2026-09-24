@@ -216,3 +216,102 @@ final class MachOImage {
         return String(data: terminated, encoding: .utf8)
     }
 }
+
+enum MachOPatchError: LocalizedError {
+    case pathTooLong(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .pathTooLong(let path):
+            return String(localized: "There isn't enough room in the tweak to point it at \(path). Rename the substrate dylib in the Tweak Library to something shorter.")
+        }
+    }
+}
+
+/// Rewrites the paths of linked libraries in place. Only works when the new
+/// path fits into the existing load command, which is the usual case since
+/// jailbreak paths are long.
+enum MachOPatcher {
+    private static let dylibCommandKinds: Set<UInt32> = [
+        MachO.lcLoadDylib,
+        MachO.lcLoadWeakDylib,
+        0x8000_001F, // LC_REEXPORT_DYLIB
+        0x20,        // LC_LAZY_LOAD_DYLIB
+        0x8000_0023, // LC_LOAD_UPWARD_DYLIB
+    ]
+
+    /// Every linked library path across all slices, without duplicates.
+    static func linkedLibraries(at url: URL) -> [String] {
+        guard let image = try? MachOImage(url: url) else { return [] }
+        var seen = Set<String>()
+        var result: [String] = []
+        for slice in image.slices {
+            for command in image.loadCommands(in: slice) where dylibCommandKinds.contains(command.kind) {
+                guard let path = command.payload, seen.insert(path).inserted else { continue }
+                result.append(path)
+            }
+        }
+        return result
+    }
+
+    /// Points every linked library matching `predicate` at `newPath`. Returns
+    /// how many load commands were changed.
+    @discardableResult
+    static func rewriteLinkedLibraries(at url: URL, matching predicate: (String) -> Bool, to newPath: String) throws -> Int {
+        var data = try Data(contentsOf: url)
+        let image = try MachOImage(data: data)
+        let newBytes = Array(newPath.utf8)
+        var changed = 0
+
+        for slice in image.slices {
+            for command in image.loadCommands(in: slice) where dylibCommandKinds.contains(command.kind) {
+                guard let path = command.payload, predicate(path) else { continue }
+                let rawOffset = data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: command.offset + 8, as: UInt32.self) }
+                let nameOffset = Int(slice.isSwapped ? rawOffset.byteSwapped : rawOffset)
+                let available = Int(command.size) - nameOffset
+                guard nameOffset >= 24, newBytes.count + 1 <= available else {
+                    throw MachOPatchError.pathTooLong(newPath)
+                }
+                let start = command.offset + nameOffset
+                var field = newBytes
+                field.append(contentsOf: repeatElement(0, count: available - newBytes.count))
+                data.replaceSubrange(start..<(start + available), with: field)
+                changed += 1
+            }
+        }
+
+        if changed > 0 {
+            try data.write(to: url, options: .atomic)
+        }
+        return changed
+    }
+}
+
+/// Knows which libraries a jailbreak tweak expects from the hooking framework.
+enum TweakDependencies {
+    private static let substrateNames: Set<String> = [
+        "cydiasubstrate",
+        "cydiasubstrate.dylib",
+        "libsubstrate.dylib",
+        "libellekit.dylib",
+        "libhooker.dylib",
+        "libsubstitute.dylib",
+        "libsubstitute.0.dylib",
+    ]
+
+    static func isSubstrate(_ path: String) -> Bool {
+        substrateNames.contains((path as NSString).lastPathComponent.lowercased())
+    }
+
+    /// Libraries that only exist on a jailbroken device and that SwiftIPA can't
+    /// provide, so the tweak will likely fail to load without them.
+    static func isJailbreakOnly(_ path: String) -> Bool {
+        if isSubstrate(path) { return false }
+        let lowered = path.lowercased()
+        if lowered.hasPrefix("@rpath/libswift") || lowered.hasPrefix("/usr/lib/swift/") { return false }
+        return lowered.hasPrefix("/var/jb/")
+            || lowered.hasPrefix("/library/")
+            || lowered.hasPrefix("/usr/local/")
+            || lowered.hasPrefix("@rpath/")
+    }
+}

@@ -126,22 +126,14 @@ struct LibraryView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: SISpacing.md) {
-            Image(systemName: "bolt.horizontal.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(SIColor.accent)
-            Text("Your library is empty")
-                .font(SIFont.headline)
-                .foregroundStyle(SIColor.textPrimary)
-            Text("Import an IPA, download one from a source, or share one in from another app.")
-                .font(SIFont.body)
-                .foregroundStyle(SIColor.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, SISpacing.xl)
+        SIEmptyState(
+            systemImage: "square.stack.3d.up",
+            title: "Your library is empty",
+            message: "Import an IPA, download one from a source, or share one in from another app."
+        ) {
             Button("Import IPA") { showingImporter = true }
                 .buttonStyle(.siPrimary)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var importingOverlay: some View {
@@ -153,9 +145,8 @@ struct LibraryView: View {
                 .foregroundStyle(SIColor.textPrimary)
         }
         .padding(SISpacing.lg)
-        .background(SIColor.surface)
+        .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: SIRadius.md, style: .continuous))
-        .shadow(radius: 12)
     }
 
     private func toggleSelection(_ entry: AppEntry) {
@@ -211,7 +202,7 @@ struct AppRow: View {
             }
 
             iconView
-                .frame(width: 52, height: 52)
+                .frame(width: 46, height: 46)
                 .clipShape(RoundedRectangle(cornerRadius: SIRadius.md, style: .continuous))
 
             VStack(alignment: .leading, spacing: 3) {
@@ -229,7 +220,7 @@ struct AppRow: View {
             if entry.isSigned {
                 StatusBadge(text: String(localized: "Signed"), color: SIColor.success)
             } else {
-                StatusBadge(text: String(localized: "Unsigned"), color: SIColor.textSecondary)
+                StatusBadge(text: String(localized: "Unsigned"), color: SIColor.textSecondary, style: .plain)
             }
         }
         .padding(SISpacing.sm + 2)

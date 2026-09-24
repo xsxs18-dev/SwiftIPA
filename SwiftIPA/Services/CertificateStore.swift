@@ -13,6 +13,8 @@ final class CertificateStore: ObservableObject {
     private let indexURL: URL
     private let defaults = UserDefaults.standard
     private let defaultKey = "SwiftIPA.defaultCertificateID"
+    private var profileBundleIDs: [UUID: String] = [:]
+    private let profileBundleIDsLock = NSLock()
 
     private init() {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -36,6 +38,23 @@ final class CertificateStore: ObservableObject {
     func certificate(withID id: UUID?) -> SigningCertificate? {
         guard let id else { return nil }
         return certificates.first { $0.id == id }
+    }
+
+    /// Bundle ID from the certificate's provisioning profile, without the team
+    /// prefix. Can be a wildcard (`*` or `com.example.*`).
+    func profileBundleIdentifier(forCertificateID id: UUID?) -> String? {
+        guard let certificate = certificate(withID: id) else { return nil }
+        profileBundleIDsLock.lock()
+        let cached = profileBundleIDs[certificate.id]
+        profileBundleIDsLock.unlock()
+        if let cached { return cached }
+
+        guard let info = try? CertificateService.inspectProvisioningProfile(at: provisionURL(for: certificate)),
+              let bundleID = info.bundleIdentifier else { return nil }
+        profileBundleIDsLock.lock()
+        profileBundleIDs[certificate.id] = bundleID
+        profileBundleIDsLock.unlock()
+        return bundleID
     }
 
     var defaultCertificate: SigningCertificate? {

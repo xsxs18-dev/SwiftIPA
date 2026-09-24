@@ -10,21 +10,21 @@ struct RootTabView: View {
                 LibraryView()
             }
             .tabItem {
-                Label("Library", systemImage: "square.stack.3d.up.fill")
+                Label("Library", systemImage: "square.stack.3d.up")
             }
 
             NavigationStack {
                 SourcesView()
             }
             .tabItem {
-                Label("Sources", systemImage: "tray.full.fill")
+                Label("Sources", systemImage: "tray.full")
             }
 
             NavigationStack {
                 SettingsView()
             }
             .tabItem {
-                Label("Settings", systemImage: "gearshape.fill")
+                Label("Settings", systemImage: "gearshape")
             }
         }
         .tint(SIColor.accent)
