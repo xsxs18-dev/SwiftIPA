@@ -13,13 +13,21 @@
       "iconURL": "https://raw.githubusercontent.com/xsxs18-dev/SwiftIPA/main/SwiftIPA/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png",
       "tintColor": "#FF9F0A",
       "category": "utilities",
-      "version": "1.6.2",
+      "version": "1.7.0",
       "versionDate": "2026-09-24",
-      "versionDescription": "- fix: block installing SwiftIPA over itself and point to Export IPA\n- Update AltStore source for build 32",
-      "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-33/SwiftIPA-unsigned.ipa",
-      "size": 3120790,
+      "versionDescription": "- ci: build pull requests without publishing a release\n- feat: cleaner UI and a Bugs & Issues page in Settings\n- feat: faster signing and bundle ID from certificate\n- feat: inject .deb tweaks, with ElleKit linked in automatically\n- Update AltStore source for build 33",
+      "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-35/SwiftIPA-unsigned.ipa",
+      "size": 3214716,
       "minOSVersion": "16.0",
       "versions": [
+        {
+          "version": "1.7.0",
+          "date": "2026-09-24",
+          "localizedDescription": "- ci: build pull requests without publishing a release\n- feat: cleaner UI and a Bugs & Issues page in Settings\n- feat: faster signing and bundle ID from certificate\n- feat: inject .deb tweaks, with ElleKit linked in automatically\n- Update AltStore source for build 33",
+          "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-35/SwiftIPA-unsigned.ipa",
+          "size": 3214716,
+          "minOSVersion": "16.0"
+        },
         {
           "version": "1.6.2",
           "date": "2026-09-24",
