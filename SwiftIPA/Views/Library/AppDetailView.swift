@@ -33,39 +33,40 @@ struct AppDetailView: View {
     private func content(for entry: AppEntry) -> some View {
         List {
             Section {
-                HStack(spacing: SISpacing.md) {
-                    iconView(for: entry)
-                        .frame(width: 64, height: 64)
-                        .clipShape(RoundedRectangle(cornerRadius: SIRadius.md, style: .continuous))
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(entry.name).font(SIFont.title)
-                        Text(entry.bundleIdentifier).font(SIFont.caption).foregroundStyle(SIColor.textSecondary)
-                        Text("\(entry.displayVersion) · \(entry.displaySize)").font(SIFont.caption).foregroundStyle(SIColor.textSecondary)
+                VStack(spacing: SISpacing.md) {
+                    HStack(spacing: SISpacing.md) {
+                        iconView(for: entry)
+                            .frame(width: 60, height: 60)
+                            .clipShape(RoundedRectangle(cornerRadius: SIRadius.md, style: .continuous))
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(entry.name).font(SIFont.title)
+                            Text(entry.bundleIdentifier).font(SIFont.caption).foregroundStyle(SIColor.textSecondary)
+                            Text("\(entry.displayVersion) · \(entry.displaySize)").font(SIFont.caption).foregroundStyle(SIColor.textSecondary)
+                        }
+                        Spacer(minLength: 0)
                     }
-                    Spacer()
+                    HStack(spacing: SISpacing.sm) {
+                        Button(entry.isSigned ? LocalizedStringKey("Re-sign") : LocalizedStringKey("Sign")) {
+                            showingSigningSheet = true
+                        }
+                        .buttonStyle(.siPrimaryWide)
+                        if entry.isSigned {
+                            Button("Install") {
+                                showingInstall = true
+                            }
+                            .buttonStyle(.siSecondaryWide)
+                        }
+                    }
                 }
                 .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: SISpacing.sm, leading: 0, bottom: SISpacing.sm, trailing: 0))
             }
 
             Section {
                 Button {
-                    showingSigningSheet = true
-                } label: {
-                    Label(entry.isSigned ? "Re-sign" : "Sign", systemImage: "bolt.fill")
-                }
-
-                Button {
                     showingShareSheet = true
                 } label: {
                     Label("Export IPA", systemImage: "square.and.arrow.up")
-                }
-
-                if entry.isSigned {
-                    Button {
-                        showingInstall = true
-                    } label: {
-                        Label("Install", systemImage: "arrow.down.circle.fill")
-                    }
                 }
 
                 Button {

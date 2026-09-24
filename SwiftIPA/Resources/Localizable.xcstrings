@@ -2730,6 +2730,496 @@
           }
         }
       }
+    },
+    "%@ is added automatically when a tweak needs CydiaSubstrate.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ wird automatisch hinzugefügt, wenn ein Tweak CydiaSubstrate braucht."
+          }
+        }
+      }
+    },
+    "%@ needs CydiaSubstrate or ElleKit. Import ElleKit's .deb (or libellekit.dylib) in the Tweak Library, then sign again.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ braucht CydiaSubstrate oder ElleKit. Importiere die .deb von ElleKit (oder libellekit.dylib) in der Tweak-Bibliothek und signiere dann erneut."
+          }
+        }
+      }
+    },
+    "%lld changed": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld geändert"
+          }
+        }
+      }
+    },
+    "1. Open …\n2. Tap …\n3. …": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1. Öffne …\n2. Tippe auf …\n3. …"
+          }
+        }
+      }
+    },
+    "Add .dylib or .deb": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".dylib oder .deb hinzufügen"
+          }
+        }
+      }
+    },
+    "Appearance, compatibility, removal, network, entitlements and speed settings.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Darstellung, Kompatibilität, Entfernen, Netzwerk, Entitlements und Geschwindigkeit."
+          }
+        }
+      }
+    },
+    "Bug": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bug"
+          }
+        }
+      }
+    },
+    "Bugs & Issues": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugs & Probleme"
+          }
+        }
+      }
+    },
+    "Cache": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cache"
+          }
+        }
+      }
+    },
+    "Certificate bundle ID: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bundle-ID des Zertifikats: %@"
+          }
+        }
+      }
+    },
+    "Couldn't read a bundle ID from this certificate's profile, so the original is kept.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus dem Profil dieses Zertifikats konnte keine Bundle-ID gelesen werden, daher bleibt die ursprüngliche erhalten."
+          }
+        }
+      }
+    },
+    "Fast Packaging": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schnelles Packen"
+          }
+        }
+      }
+    },
+    "Fast Packaging skips compressing the signed IPA. Signing finishes a lot quicker, the IPA just takes more space.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schnelles Packen überspringt das Komprimieren der signierten IPA. Das Signieren geht deutlich schneller, die IPA braucht nur mehr Speicher."
+          }
+        }
+      }
+    },
+    "Feature Request": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Funktionswunsch"
+          }
+        }
+      }
+    },
+    "From certificate": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vom Zertifikat"
+          }
+        }
+      }
+    },
+    "Import Failed": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import fehlgeschlagen"
+          }
+        }
+      }
+    },
+    "Include Device Info": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geräteinfos anhängen"
+          }
+        }
+      }
+    },
+    "May not load without: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lädt eventuell nicht ohne: %@"
+          }
+        }
+      }
+    },
+    "More Options": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weitere Optionen"
+          }
+        }
+      }
+    },
+    "Needs ElleKit – import its .deb first": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Braucht ElleKit – importiere zuerst dessen .deb"
+          }
+        }
+      }
+    },
+    "Only what's shown here is added. Nothing is sent until you submit the issue on GitHub.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Es wird nur hinzugefügt, was hier angezeigt wird. Nichts wird gesendet, bis du das Issue auf GitHub abschickst."
+          }
+        }
+      }
+    },
+    "Open Issue on GitHub": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Issue auf GitHub öffnen"
+          }
+        }
+      }
+    },
+    "Opens github.com with the issue already filled in. You need a GitHub account to submit it.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öffnet github.com mit bereits ausgefülltem Issue. Zum Abschicken brauchst du ein GitHub-Konto."
+          }
+        }
+      }
+    },
+    "Original bundle ID: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ursprüngliche Bundle-ID: %@"
+          }
+        }
+      }
+    },
+    "Question": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frage"
+          }
+        }
+      }
+    },
+    "Re-sign": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu signieren"
+          }
+        }
+      }
+    },
+    "Rename Tweak": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tweak umbenennen"
+          }
+        }
+      }
+    },
+    "Report": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meldung"
+          }
+        }
+      }
+    },
+    "Short summary": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurze Zusammenfassung"
+          }
+        }
+      }
+    },
+    "Signs as: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird signiert als: %@"
+          }
+        }
+      }
+    },
+    "Speed": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geschwindigkeit"
+          }
+        }
+      }
+    },
+    "Steps to Reproduce": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schritte zum Nachstellen"
+          }
+        }
+      }
+    },
+    "Stop Using as Substrate": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht mehr als Substrate verwenden"
+          }
+        }
+      }
+    },
+    "Storage & Reset": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speicher & Zurücksetzen"
+          }
+        }
+      }
+    },
+    "Substrate": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Substrate"
+          }
+        }
+      }
+    },
+    "Support": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Support"
+          }
+        }
+      }
+    },
+    "Theme": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Design"
+          }
+        }
+      }
+    },
+    "There isn't enough room in the tweak to point it at %@. Rename the substrate dylib in the Tweak Library to something shorter.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Im Tweak ist nicht genug Platz, um ihn auf %@ zu verweisen. Benenne die Substrate-dylib in der Tweak-Bibliothek kürzer um."
+          }
+        }
+      }
+    },
+    "This .deb uses %@ compression, which SwiftIPA can't unpack yet. Re-export it as a raw .dylib instead.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese .deb nutzt %@-Komprimierung, die SwiftIPA noch nicht entpacken kann. Exportiere sie stattdessen als .dylib."
+          }
+        }
+      }
+    },
+    "This certificate is a wildcard, so the original bundle ID is kept.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Zertifikat ist ein Wildcard-Zertifikat, daher bleibt die ursprüngliche Bundle-ID erhalten."
+          }
+        }
+      }
+    },
+    "Tweaks from a .deb that hook with CydiaSubstrate need ElleKit. Import ElleKit's .deb once and SwiftIPA injects it automatically whenever a tweak needs it. Long-press a tweak for more options.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tweaks aus einer .deb, die mit CydiaSubstrate hooken, brauchen ElleKit. Importiere die .deb von ElleKit einmal und SwiftIPA injiziert es automatisch, wann immer ein Tweak es braucht. Halte einen Tweak gedrückt für mehr Optionen."
+          }
+        }
+      }
+    },
+    "Tweaks from a .deb usually need ElleKit. Add ElleKit's .deb here too and it gets injected automatically.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tweaks aus einer .deb brauchen meist ElleKit. Füge hier auch die .deb von ElleKit hinzu, dann wird es automatisch injiziert."
+          }
+        }
+      }
+    },
+    "Type": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Art"
+          }
+        }
+      }
+    },
+    "Use Bundle ID from Certificate": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bundle-ID vom Zertifikat verwenden"
+          }
+        }
+      }
+    },
+    "Use as Substrate (ElleKit)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Als Substrate verwenden (ElleKit)"
+          }
+        }
+      }
+    },
+    "Uses the bundle ID from the provisioning profile of the certificate you sign with. Wildcard profiles keep the app's own ID.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verwendet die Bundle-ID aus dem Provisioning-Profil des Zertifikats, mit dem du signierst. Bei Wildcard-Profilen bleibt die ID der App erhalten."
+          }
+        }
+      }
+    },
+    "View Open Issues": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offene Issues ansehen"
+          }
+        }
+      }
+    },
+    "What happened, and what did you expect?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Was ist passiert und was hast du erwartet?"
+          }
+        }
+      }
+    },
+    "What would you like SwiftIPA to do?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Was soll SwiftIPA können?"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

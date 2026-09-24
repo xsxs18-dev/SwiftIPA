@@ -11,6 +11,17 @@ struct ProvisioningProfileInfo {
     var deviceCount: Int?
     var entitlements: [String: Any]
     var supportsUnrestrictedEntitlements: Bool
+    var applicationIdentifier: String?
+
+    /// The profile's App ID without the team prefix, e.g. `com.example.app` or `*`.
+    var bundleIdentifier: String? {
+        guard let applicationIdentifier, !applicationIdentifier.isEmpty else { return nil }
+        if let prefix = applicationIdentifierPrefix, applicationIdentifier.hasPrefix(prefix + ".") {
+            return String(applicationIdentifier.dropFirst(prefix.count + 1))
+        }
+        guard let dot = applicationIdentifier.firstIndex(of: ".") else { return applicationIdentifier }
+        return String(applicationIdentifier[applicationIdentifier.index(after: dot)...])
+    }
 }
 
 struct P12Info {
@@ -61,7 +72,8 @@ enum CertificateService {
             expirationDate: plist["ExpirationDate"] as? Date,
             deviceCount: (plist["ProvisionedDevices"] as? [String])?.count,
             entitlements: entitlements,
-            supportsUnrestrictedEntitlements: unrestricted
+            supportsUnrestrictedEntitlements: unrestricted,
+            applicationIdentifier: entitlements["application-identifier"] as? String
         )
     }
 

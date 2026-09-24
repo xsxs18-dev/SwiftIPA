@@ -50,21 +50,14 @@ struct SourcesView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: SISpacing.md) {
-            Image(systemName: "tray.full.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(SIColor.accent)
-            Text("No sources yet")
-                .font(SIFont.headline)
-            Text("Add an AltStore or ESign-compatible repo URL to browse and sign apps straight from it.")
-                .font(SIFont.body)
-                .foregroundStyle(SIColor.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, SISpacing.xl)
+        SIEmptyState(
+            systemImage: "tray",
+            title: "No sources yet",
+            message: "Add an AltStore or ESign-compatible repo URL to browse and sign apps straight from it."
+        ) {
             Button("Add Source") { showingAddSheet = true }
                 .buttonStyle(.siPrimary)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

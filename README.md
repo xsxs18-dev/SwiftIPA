@@ -16,16 +16,18 @@ There's no account and no tracking. The app only goes online when you ask it to:
 
 ## Features
 
-- Change the bundle ID, name, version, build, minimum iOS version, icon and entitlements
+- Change the bundle ID, name, version, build, minimum iOS version, icon and entitlements, or take the bundle ID straight from your certificate's provisioning profile
 - Re-signing the same app with the same certificate and settings is almost instant, because the result gets cached
+- Fast Packaging (on by default) skips compressing the signed IPA, so signing big apps takes a fraction of the time
 - Sign several apps in one go
 - Save your favorite settings as presets
-- Inject `.dylib` or `.deb` tweaks
+- Inject `.dylib` or `.deb` tweaks, right from the sign screen. Every tweak inside a `.deb` is picked up (gzip and xz packages), and tweaks that hook with CydiaSubstrate are pointed at ElleKit automatically once you've imported ElleKit's `.deb`
 - Remove extensions, the Watch app or the embedded profile, force file sharing, and a few more tweaks like that
 - Add AltStore or ESign sources and pull apps from them
 - See when a certificate is about to expire, with a reminder a few days before
 - Look inside an IPA before signing it (architectures, encryption, linked libraries, extensions)
 - Six color themes, English and German
+- Report bugs from Settings → Bugs & Issues, which opens a prefilled issue on GitHub
 
 ## Installing apps
 

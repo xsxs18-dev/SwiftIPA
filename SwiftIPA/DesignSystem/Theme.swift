@@ -21,6 +21,35 @@ enum SIColor {
     static var danger: Color { ThemeManager.shared.current.danger }
     static var warning: Color { ThemeManager.shared.current.warning }
     static var success: Color { ThemeManager.shared.current.success }
+    static var onAccent: Color { .black }
+}
+
+/// Centered placeholder for empty lists, kept quiet on purpose.
+struct SIEmptyState<Actions: View>: View {
+    let systemImage: String
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
+    @ViewBuilder var actions: () -> Actions
+
+    var body: some View {
+        VStack(spacing: SISpacing.sm) {
+            Image(systemName: systemImage)
+                .font(.system(size: 32, weight: .light))
+                .foregroundStyle(SIColor.textSecondary)
+                .padding(.bottom, SISpacing.xs)
+            Text(title)
+                .font(SIFont.headline)
+                .foregroundStyle(SIColor.textPrimary)
+            Text(message)
+                .font(SIFont.caption)
+                .foregroundStyle(SIColor.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, SISpacing.xl)
+            actions()
+                .padding(.top, SISpacing.sm)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
 }
 
 enum SISpacing {
@@ -33,13 +62,13 @@ enum SISpacing {
 
 enum SIRadius {
     static let sm: CGFloat = 8
-    static let md: CGFloat = 14
+    static let md: CGFloat = 12
     static let lg: CGFloat = 20
 }
 
 enum SIFont {
-    static let title = Font.system(.title2, design: .rounded).weight(.bold)
-    static let headline = Font.system(.headline, design: .rounded)
+    static let title = Font.system(.title3).weight(.semibold)
+    static let headline = Font.system(.body).weight(.medium)
     static let body = Font.system(.body, design: .default)
     static let mono = Font.system(.footnote, design: .monospaced)
     static let caption = Font.system(.caption, design: .default)
@@ -51,7 +80,7 @@ struct SIPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(SIFont.headline)
-            .foregroundStyle(Color.black)
+            .foregroundStyle(SIColor.onAccent)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .padding(.vertical, SISpacing.sm + 2)
             .padding(.horizontal, SISpacing.md)
@@ -103,11 +132,6 @@ struct SICardBackground: ViewModifier {
         content
             .background(SIColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: SIRadius.md, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: SIRadius.md, style: .continuous)
-                    .stroke(SIColor.border, lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.16), radius: 8, x: 0, y: 2)
     }
 }
 
