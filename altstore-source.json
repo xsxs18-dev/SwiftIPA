@@ -14,12 +14,20 @@
       "tintColor": "#FF9F0A",
       "category": "utilities",
       "version": "1.7.0",
-      "versionDate": "2026-09-24",
-      "versionDescription": "- ci: build pull requests without publishing a release\n- feat: cleaner UI and a Bugs & Issues page in Settings\n- feat: faster signing and bundle ID from certificate\n- feat: inject .deb tweaks, with ElleKit linked in automatically\n- Update AltStore source for build 33",
-      "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-35/SwiftIPA-unsigned.ipa",
-      "size": 3214716,
+      "versionDate": "2026-10-18",
+      "versionDescription": "- Update AltStore source for build 35",
+      "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-36/SwiftIPA-unsigned.ipa",
+      "size": 3222513,
       "minOSVersion": "16.0",
       "versions": [
+        {
+          "version": "1.7.0",
+          "date": "2026-10-18",
+          "localizedDescription": "- Update AltStore source for build 35",
+          "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-36/SwiftIPA-unsigned.ipa",
+          "size": 3222513,
+          "minOSVersion": "16.0"
+        },
         {
           "version": "1.7.0",
           "date": "2026-09-24",
