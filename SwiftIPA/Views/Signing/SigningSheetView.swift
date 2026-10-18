@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import PhotosUI
 
 struct SigningSheetView: View {
     let entryID: UUID
@@ -17,7 +18,8 @@ struct SigningSheetView: View {
     @State private var errorMessage: String?
     @State private var showingSavePreset = false
     @State private var presetName = ""
-    @State private var showingIconPicker = false
+    @State private var pickedIconItem: PhotosPickerItem?
+    @State private var iconImportError: String?
     @State private var hasSeededDefaults = false
 
     @Environment(\.dismiss) private var dismiss
@@ -66,10 +68,19 @@ struct SigningSheetView: View {
                 }
             }
             .onAppear(perform: prepareDefaults)
+            .onChange(of: pickedIconItem) { newItem in
+                guard let newItem else { return }
+                loadPickedIcon(newItem)
+            }
             .alert("Signing Failed", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
                 Button("OK") { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
+            }
+            .alert("Couldn't Use That Image", isPresented: Binding(get: { iconImportError != nil }, set: { if !$0 { iconImportError = nil } })) {
+                Button("OK") { iconImportError = nil }
+            } message: {
+                Text(iconImportError ?? "")
             }
             .sheet(isPresented: $showingSavePreset) {
                 NameInputSheet(title: String(localized: "Save Preset"), placeholder: String(localized: "Preset name"), text: "", confirmTitle: String(localized: "Save")) { name in
@@ -130,6 +141,30 @@ struct SigningSheetView: View {
             TextField("Display Name", text: $options.displayName)
                 .autocorrectionDisabled()
 
+            HStack(spacing: SISpacing.md) {
+                iconPreview(for: entry)
+                    .frame(width: 44, height: 44)
+                    .clipShape(RoundedRectangle(cornerRadius: SIRadius.sm, style: .continuous))
+
+                Text(options.customIconPath == nil ? String(localized: "App Icon") : String(localized: "Custom Icon"))
+
+                Spacer()
+
+                PhotosPicker(selection: $pickedIconItem, matching: .images) {
+                    Text(options.customIconPath == nil ? "Choose" : "Change")
+                }
+
+                if options.customIconPath != nil {
+                    Button(role: .destructive) {
+                        resetIcon()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(SIColor.danger)
+                }
+            }
+
             Picker("Bundle ID", selection: $options.bundleIdentifierRule) {
                 ForEach(BundleIdentifierRule.allCases) { rule in
                     Text(rule.displayName).tag(rule)
@@ -170,6 +205,52 @@ struct SigningSheetView: View {
         } footer: {
             identityFooter(original: original)
         }
+    }
+
+    @ViewBuilder
+    private func iconPreview(for entry: AppEntry) -> some View {
+        if let path = options.customIconPath, let image = UIImage(contentsOfFile: path) {
+            Image(uiImage: image).resizable().scaledToFill()
+        } else if let url = library.iconURL(for: entry), let image = UIImage(contentsOfFile: url.path) {
+            Image(uiImage: image).resizable().scaledToFill()
+        } else {
+            RoundedRectangle(cornerRadius: SIRadius.sm, style: .continuous)
+                .fill(SIColor.surfaceElevated)
+                .overlay(Image(systemName: "app.dashed").foregroundStyle(SIColor.textSecondary))
+        }
+    }
+
+    private func loadPickedIcon(_ item: PhotosPickerItem) {
+        Task {
+            do {
+                guard let data = try await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else {
+                    await MainActor.run { iconImportError = String(localized: "Couldn't load that image.") }
+                    return
+                }
+                guard let pngData = image.pngData() else {
+                    await MainActor.run { iconImportError = String(localized: "Couldn't convert that image to PNG.") }
+                    return
+                }
+                let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString)-icon.png")
+                try pngData.write(to: url)
+                await MainActor.run {
+                    if let previousPath = options.customIconPath {
+                        try? FileManager.default.removeItem(atPath: previousPath)
+                    }
+                    options.customIconPath = url.path
+                    pickedIconItem = nil
+                }
+            } catch {
+                await MainActor.run { iconImportError = error.localizedDescription }
+            }
+        }
+    }
+
+    private func resetIcon() {
+        if let path = options.customIconPath {
+            try? FileManager.default.removeItem(atPath: path)
+        }
+        options.customIconPath = nil
     }
 
     @ViewBuilder
