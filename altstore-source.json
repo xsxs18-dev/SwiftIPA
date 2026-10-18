@@ -13,13 +13,21 @@
       "iconURL": "https://raw.githubusercontent.com/xsxs18-dev/SwiftIPA/main/SwiftIPA/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png",
       "tintColor": "#FF9F0A",
       "category": "utilities",
-      "version": "1.7.0",
+      "version": "1.7.1",
       "versionDate": "2026-10-18",
-      "versionDescription": "- Update AltStore source for build 35",
-      "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-36/SwiftIPA-unsigned.ipa",
-      "size": 3222513,
+      "versionDescription": "- feat: pick a custom app icon when signing\n- Update AltStore source for build 36",
+      "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-37/SwiftIPA-unsigned.ipa",
+      "size": 3241059,
       "minOSVersion": "16.0",
       "versions": [
+        {
+          "version": "1.7.1",
+          "date": "2026-10-18",
+          "localizedDescription": "- feat: pick a custom app icon when signing\n- Update AltStore source for build 36",
+          "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-37/SwiftIPA-unsigned.ipa",
+          "size": 3241059,
+          "minOSVersion": "16.0"
+        },
         {
           "version": "1.7.0",
           "date": "2026-10-18",
