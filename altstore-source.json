@@ -15,7 +15,7 @@
       "category": "utilities",
       "version": "1.7.2",
       "versionDate": "2026-10-28",
-      "versionDescription": "- Fix incoming IPA sharing with direct document imports like Feather\n- Update AltStore source for build 37",
+      "versionDescription": "- Fix incoming IPA sharing with direct document imports\n- Update AltStore source for build 37",
       "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-38/SwiftIPA-unsigned.ipa",
       "size": 3202894,
       "minOSVersion": "16.0",
@@ -23,7 +23,7 @@
         {
           "version": "1.7.2",
           "date": "2026-10-28",
-          "localizedDescription": "- Fix incoming IPA sharing with direct document imports like Feather\n- Update AltStore source for build 37",
+          "localizedDescription": "- Fix incoming IPA sharing with direct document imports\n- Update AltStore source for build 37",
           "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-38/SwiftIPA-unsigned.ipa",
           "size": 3202894,
           "minOSVersion": "16.0"
