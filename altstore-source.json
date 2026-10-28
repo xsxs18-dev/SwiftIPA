@@ -13,13 +13,21 @@
       "iconURL": "https://raw.githubusercontent.com/xsxs18-dev/SwiftIPA/main/SwiftIPA/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png",
       "tintColor": "#FF9F0A",
       "category": "utilities",
-      "version": "1.7.1",
-      "versionDate": "2026-10-18",
-      "versionDescription": "- feat: pick a custom app icon when signing\n- Update AltStore source for build 36",
-      "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-37/SwiftIPA-unsigned.ipa",
-      "size": 3241059,
+      "version": "1.7.2",
+      "versionDate": "2026-10-28",
+      "versionDescription": "- Fix incoming IPA sharing with direct document imports like Feather\n- Update AltStore source for build 37",
+      "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-38/SwiftIPA-unsigned.ipa",
+      "size": 3202894,
       "minOSVersion": "16.0",
       "versions": [
+        {
+          "version": "1.7.2",
+          "date": "2026-10-28",
+          "localizedDescription": "- Fix incoming IPA sharing with direct document imports like Feather\n- Update AltStore source for build 37",
+          "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-38/SwiftIPA-unsigned.ipa",
+          "size": 3202894,
+          "minOSVersion": "16.0"
+        },
         {
           "version": "1.7.1",
           "date": "2026-10-18",
