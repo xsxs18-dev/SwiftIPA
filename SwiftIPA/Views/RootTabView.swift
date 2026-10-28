@@ -3,6 +3,8 @@ import UIKit
 
 struct RootTabView: View {
     @State private var importMessage: String?
+    @State private var importError: String?
+    @State private var importingURLs: Set<URL> = []
 
     var body: some View {
         TabView {
@@ -28,10 +30,16 @@ struct RootTabView: View {
             }
         }
         .tint(SIColor.accent)
-        .onAppear(perform: handleForeground)
-        .onOpenURL { _ in handleForeground() }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            handleForeground()
+        .onOpenURL { url in
+            if url.isFileURL { importFile(url) }
+        }
+        .alert("Import Failed", isPresented: Binding(
+            get: { importError != nil },
+            set: { if !$0 { importError = nil } }
+        )) {
+            Button("OK") { importError = nil }
+        } message: {
+            Text(importError ?? "")
         }
         .alert("Imported from Share Sheet", isPresented: Binding(
             get: { importMessage != nil },
@@ -43,32 +51,20 @@ struct RootTabView: View {
         }
     }
 
-    private func handleForeground() {
-        Task {
-            await importPending()
-        }
-    }
-
-    private func importPending() async {
-        let pending = InboxStore.takePending()
-        guard !pending.isEmpty else { return }
-
-        var imported = 0
-        for item in pending {
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(item.suggestedName)
+    private func importFile(_ url: URL) {
+        guard importingURLs.insert(url).inserted else { return }
+        Task { @MainActor in
+            defer { importingURLs.remove(url) }
             do {
-                try? FileManager.default.removeItem(at: tempURL)
-                try item.data.write(to: tempURL)
-                _ = try await AppLibraryStore.shared.importIPA(at: tempURL, sourceName: String(localized: "Shared from another app"))
-                imported += 1
+                guard ["ipa", "tipa"].contains(url.pathExtension.lowercased()) else {
+                    throw CocoaError(.fileReadUnsupportedScheme)
+                }
+                _ = try await AppLibraryStore.shared.importIPA(at: url, sourceName: String(localized: "Shared from another app"))
+                importMessage = String(localized: "App imported into Library.")
             } catch {
-                continue
+                importError = error.localizedDescription
             }
-            try? FileManager.default.removeItem(at: tempURL)
-        }
-
-        if imported > 0 {
-            importMessage = String(localized: "Brought in \(imported) app(s) shared from another app.")
         }
     }
+
 }

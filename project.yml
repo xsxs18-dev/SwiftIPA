@@ -41,6 +41,25 @@ targets:
       path: SwiftIPA/Resources/Info.plist
       properties:
         UILaunchScreen: {}
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: iOS App Archive
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.apple.itunes.ipa
+              - com.xsxs18.SwiftIPA.ipa
+              - com.xsxs18.SwiftIPA.tipa
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.xsxs18.SwiftIPA.ipa
+            UTTypeDescription: iOS App Archive
+            UTTypeConformsTo: [public.data, public.content, com.apple.itunes.ipa]
+            UTTypeTagSpecification:
+              public.filename-extension: [ipa]
+          - UTTypeIdentifier: com.xsxs18.SwiftIPA.tipa
+            UTTypeDescription: iOS App Archive
+            UTTypeConformsTo: [public.data, public.content, com.apple.itunes.ipa]
+            UTTypeTagSpecification:
+              public.filename-extension: [tipa]
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
@@ -48,7 +67,7 @@ targets:
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         CFBundleVersion: "0"
-        CFBundleShortVersionString: "1.7.1"
+        CFBundleShortVersionString: "1.7.2"
         CFBundleLocalizations:
           - en
           - de
@@ -76,39 +95,14 @@ targets:
           - $(inherited)
           - SWIFTIPA_HAS_ZSIGN=1
     dependencies:
-      - target: ShareExtension
-        embed: true
       - package: ZIPFoundation
       - package: OpenSSL
       - sdk: libz.tbd
 
-  ShareExtension:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: SwiftIPA/Services/ThemeManager.swift
-      - path: SwiftIPA/DesignSystem/Theme.swift
-      - path: SwiftIPA/DesignSystem/SITheme.swift
-      - path: SwiftIPA/Shared/InboxStore.swift
-      - path: ShareExtension
-    info:
-      path: ShareExtension/Info.plist
-      properties:
-        CFBundleDisplayName: SwiftIPA
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.share-services
-          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
-          NSExtensionAttributes:
-            NSExtensionActivationRule: TRUEPREDICATE
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.xsxs18.SwiftIPA.ShareExtension
-        TARGETED_DEVICE_FAMILY: "1,2"
 schemes:
   SwiftIPA:
     build:
       targets:
         SwiftIPA: all
-        ShareExtension: all
     run:
       config: Debug
