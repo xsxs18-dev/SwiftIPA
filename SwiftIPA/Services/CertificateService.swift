@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(ZSignKit)
+import ZSignKit // xtool/SwiftPM build; Xcode uses the bridging header
+#endif
 import Security
 
 struct ProvisioningProfileInfo {
@@ -12,6 +15,8 @@ struct ProvisioningProfileInfo {
     var entitlements: [String: Any]
     var supportsUnrestrictedEntitlements: Bool
     var applicationIdentifier: String?
+    /// DER data of the certificates the profile was made for.
+    var developerCertificates: [Data] = []
 
     /// The profile's App ID without the team prefix, e.g. `com.example.app` or `*`.
     var bundleIdentifier: String? {
@@ -28,12 +33,15 @@ struct P12Info {
     var subjectCommonName: String?
     var expirationDate: Date?
     var issuedDate: Date?
+    /// DER data of the signing certificate.
+    var certificateData: Data
 }
 
 enum CertificateServiceError: LocalizedError {
     case cannotReadProfile
     case wrongPassword
     case cannotReadP12
+    case profileMismatch
 
     var errorDescription: String? {
         switch self {
@@ -43,6 +51,8 @@ enum CertificateServiceError: LocalizedError {
             return String(localized: "That password doesn't unlock this .p12 file.")
         case .cannotReadP12:
             return String(localized: "Couldn't read this .p12 certificate file.")
+        case .profileMismatch:
+            return String(localized: "This .p12 certificate isn't part of the provisioning profile. Apps signed with this pair won't install. Pick the profile that belongs to this certificate.")
         }
     }
 }
@@ -73,7 +83,8 @@ enum CertificateService {
             deviceCount: (plist["ProvisionedDevices"] as? [String])?.count,
             entitlements: entitlements,
             supportsUnrestrictedEntitlements: unrestricted,
-            applicationIdentifier: entitlements["application-identifier"] as? String
+            applicationIdentifier: entitlements["application-identifier"] as? String,
+            developerCertificates: (plist["DeveloperCertificates"] as? [Data]) ?? []
         )
     }
 
@@ -111,7 +122,8 @@ enum CertificateService {
         return P12Info(
             subjectCommonName: commonName as String?,
             expirationDate: notAfter,
-            issuedDate: notBefore
+            issuedDate: notBefore,
+            certificateData: certificateData
         )
     }
 }

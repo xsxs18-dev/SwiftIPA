@@ -65,6 +65,9 @@ final class InstallServer {
     private var host = "127.0.0.1"
     private var port: UInt16 = 8442
     private var currentMode: InstallMode = .secureDirect
+    /// Random path segment, so nobody else on the network can guess where the IPA is served.
+    private var token = UUID().uuidString.lowercased()
+    private var stopWork: DispatchWorkItem?
     private let queue = DispatchQueue(label: "com.xsxs18.SwiftIPA.InstallServer")
 
     private init() {}
@@ -86,6 +89,7 @@ final class InstallServer {
         self.scheme = mode.useSecureConnection ? "https" : "http"
         self.port = mode.useSecureConnection ? 8443 : 8442
         self.currentMode = mode
+        self.token = UUID().uuidString.lowercased()
 
         self.host = preferLoopback ? "127.0.0.1" : (Self.wifiIPAddress() ?? "127.0.0.1")
 
@@ -121,12 +125,18 @@ final class InstallServer {
                 guard !alreadyResumed else { return }
 
                 switch state {
+                case .waiting(let error):
+                    // E.g. the port is still taken. Waiting here would leave the install stuck on "Preparing".
+                    newListener.cancel()
+                    continuation.resume(throwing: InstallServerError.listenerFailed(error.localizedDescription))
+                case .cancelled:
+                    continuation.resume(throwing: InstallServerError.listenerFailed(String(localized: "The install was cancelled.")))
                 case .ready:
                     switch mode.presentationStyle {
                     case .direct:
                         continuation.resume(returning: InstallLink(url: URL(string: self.itmsServicesLink)!, presentationStyle: .direct))
                     case .webView:
-                        let pageURL = "\(self.scheme)://\(self.host):\(self.port)/install"
+                        let pageURL = "\(self.scheme)://\(self.host):\(self.port)/\(self.token)/install"
                         continuation.resume(returning: InstallLink(url: URL(string: pageURL)!, presentationStyle: .webView))
                     }
                 case .failed(let error):
@@ -142,8 +152,22 @@ final class InstallServer {
     }
 
     func stop() {
+        stopWork?.cancel()
+        stopWork = nil
         listener?.cancel()
         listener = nil
+    }
+
+    /// iOS fetches the IPA once. Keep serving for a bit in case it retries, then close the port.
+    private func scheduleStop(after seconds: TimeInterval) {
+        // listener and stopWork are only touched on the main queue.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            let work = DispatchWorkItem { [weak self] in self?.stop() }
+            self.stopWork?.cancel()
+            self.stopWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: work)
+        }
     }
 
     private func handle(_ connection: NWConnection) {
@@ -176,12 +200,13 @@ final class InstallServer {
     private func respond(to requestLine: String, on connection: NWConnection) {
         let parts = requestLine.split(separator: " ")
         let path = parts.count > 1 ? String(parts[1]) : "/"
+        let prefix = "/\(token)"
 
-        if path.hasPrefix("/manifest.plist") {
+        if path.hasPrefix(prefix + "/manifest.plist") {
             sendManifest(on: connection)
-        } else if path.hasPrefix("/app.ipa") {
+        } else if path.hasPrefix(prefix + "/app.ipa") {
             sendIPA(on: connection)
-        } else if path.hasPrefix("/install") {
+        } else if path.hasPrefix(prefix + "/install") {
             sendInstallPage(on: connection)
         } else {
             let body = "Not Found".data(using: .utf8)!
@@ -192,9 +217,9 @@ final class InstallServer {
     private var manifestSourceURL: URL {
         switch currentMode {
         case .secureDirect:
-            return URL(string: "\(scheme)://\(host):\(port)/manifest.plist")!
+            return URL(string: "\(scheme)://\(host):\(port)/\(token)/manifest.plist")!
         case .externalManifest:
-            let payloadURL = "\(scheme)://\(host):\(port)/app.ipa"
+            let payloadURL = "\(scheme)://\(host):\(port)/\(token)/app.ipa"
             var components = URLComponents(string: "https://api.palera.in/genPlist")!
             components.queryItems = [
                 URLQueryItem(name: "bundleid", value: bundleIdentifier),
@@ -238,7 +263,7 @@ final class InstallServer {
                     "assets": [
                         [
                             "kind": "software-package",
-                            "url": "\(scheme)://\(host):\(port)/app.ipa"
+                            "url": "\(scheme)://\(host):\(port)/\(token)/app.ipa"
                         ]
                     ],
                     "metadata": [
@@ -277,6 +302,7 @@ final class InstallServer {
             try? handle.close()
             connection.cancel()
             report(.installing)
+            scheduleStop(after: 60)
             return
         }
         let newSent = sent + Int64(chunk.count)
@@ -318,15 +344,16 @@ final class InstallServer {
         var pointer: UnsafeMutablePointer<ifaddrs>? = firstInterface
         while let interface = pointer {
             defer { pointer = interface.pointee.ifa_next }
-            let family = interface.pointee.ifa_addr.pointee.sa_family
-            guard family == UInt8(AF_INET) else { continue }
+            // Some interfaces have no address at all, reading through it would crash.
+            guard let socketAddress = interface.pointee.ifa_addr else { continue }
+            guard socketAddress.pointee.sa_family == UInt8(AF_INET) else { continue }
             let name = String(cString: interface.pointee.ifa_name)
             guard name == "en0" else { continue }
 
             var hostBuffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
             getnameinfo(
-                interface.pointee.ifa_addr,
-                socklen_t(interface.pointee.ifa_addr.pointee.sa_len),
+                socketAddress,
+                socklen_t(socketAddress.pointee.sa_len),
                 &hostBuffer,
                 socklen_t(hostBuffer.count),
                 nil,

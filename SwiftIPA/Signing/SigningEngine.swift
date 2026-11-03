@@ -25,8 +25,13 @@ actor SigningEngine {
 
     private let cache = SigningCache.shared
 
+    /// The heavy steps take turns on this actor anyway, but every running job
+    /// keeps its unpacked IPA on disk while it waits. With many jobs that could
+    /// fill up the device, two at a time is enough.
+    private static let maxConcurrentJobs = 2
+
     func run(jobs: [SigningJob]) async {
-        let concurrency = max(1, min(ProcessInfo.processInfo.activeProcessorCount, jobs.count))
+        let concurrency = max(1, min(Self.maxConcurrentJobs, jobs.count))
         await withTaskGroup(of: Void.self) { group in
             var iterator = jobs.makeIterator()
             var launched = 0
@@ -60,7 +65,11 @@ actor SigningEngine {
             )
             try? FileManager.default.removeItem(at: result.url)
         } catch {
-            await MainActor.run { job.status = .failed(error.localizedDescription) }
+            let log = (error as? ZSignEngineError)?.log
+            await MainActor.run {
+                job.log = log
+                job.status = .failed(error.localizedDescription)
+            }
         }
     }
 
@@ -82,19 +91,19 @@ actor SigningEngine {
         let certificateBundleID = CertificateStore.shared.profileBundleIdentifier(forCertificateID: certificate.id)
 
         var cacheKey: String?
-        if job.options.useCache,
+        // A random suffix is supposed to be new every time, a cached build would repeat the old one.
+        if job.options.useCache, job.options.bundleIdentifierRule != .randomSuffix,
            let sourceHash = FileHashing.cachedSHA256(of: job.sourceIPAURL),
-           let optionsData = try? JSONEncoder().encode(job.options) {
-            let optionsFingerprint = FileHashing.sha256(of: String(data: optionsData, encoding: .utf8) ?? "")
+           let optionsFingerprint = Self.fingerprint(of: job.options) {
             let certFingerprint = (FileHashing.cachedSHA256(of: p12URL) ?? "") + (FileHashing.cachedSHA256(of: provisionURL) ?? "")
             let key = cache.key(sourceHash: sourceHash, optionsFingerprint: optionsFingerprint, certificateFingerprint: certFingerprint)
             cacheKey = key
             if let cached = cache.cachedIPA(for: key) {
                 await MainActor.run { job.status = .cached }
                 let tempCopy = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).ipa")
-                try FileManager.default.replaceItem(at: tempCopy, withItemAt: cached)
+                try FileManager.default.replaceItem(at: tempCopy, withItemAt: cached.url)
                 await MainActor.run { job.status = .done(0) }
-                return (tempCopy, nil)
+                return (tempCopy, cached.bundleIdentifier)
             }
         }
 
@@ -160,12 +169,35 @@ actor SigningEngine {
         try IPAService.repack(extracted: extracted, to: output, compress: !job.options.fastPackaging)
 
         if let cacheKey {
-            cache.store(key: cacheKey, ipaURL: output)
+            cache.store(key: cacheKey, ipaURL: output, bundleIdentifier: resolvedBundleID)
         }
 
         let elapsed = Date().timeIntervalSince(started)
         await MainActor.run { job.status = .done(elapsed) }
         return (output, resolvedBundleID)
+    }
+
+    /// Everything about the options that changes the signed app: the options
+    /// themselves (with sorted keys, so the same options always give the same
+    /// text) plus the contents of the tweaks and the custom icon, which can be
+    /// replaced without the options changing.
+    private static func fingerprint(of options: SigningOptions) -> String? {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        guard let optionsData = try? encoder.encode(options) else { return nil }
+        var parts = [String(decoding: optionsData, as: UTF8.self)]
+        let store = DylibLibraryStore.shared
+        for id in options.injectedDylibIDs {
+            guard let dylib = store.dylibs.first(where: { $0.id == id }) else { continue }
+            parts.append("tweak \(id.uuidString) \(FileHashing.cachedSHA256(of: store.url(for: dylib)) ?? "-")")
+        }
+        if let provider = store.substrateProvider, !options.injectedDylibIDs.isEmpty {
+            parts.append("substrate \(FileHashing.cachedSHA256(of: store.url(for: provider)) ?? "-")")
+        }
+        if let iconPath = options.customIconPath {
+            parts.append("icon \(FileHashing.cachedSHA256(of: URL(fileURLWithPath: iconPath)) ?? "-")")
+        }
+        return FileHashing.sha256(of: parts.joined(separator: "\n"))
     }
 
     /// Returns the files zsign should inject. Tweaks built for a jailbreak link

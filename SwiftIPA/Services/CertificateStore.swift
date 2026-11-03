@@ -85,19 +85,34 @@ final class CertificateStore: ObservableObject {
             let p12Destination = folder.appendingPathComponent(p12FileName)
             let provisionDestination = folder.appendingPathComponent(provisionFileName)
 
-            try fileManager.copyItem(at: p12SourceURL, to: p12Destination)
-            try fileManager.copyItem(at: provisionSourceURL, to: provisionDestination)
+            let profileInfo: ProvisioningProfileInfo
+            let p12Info: P12Info
+            do {
+                try fileManager.copyItem(at: p12SourceURL, to: p12Destination)
+                try fileManager.copyItem(at: provisionSourceURL, to: provisionDestination)
+                profileInfo = try CertificateService.inspectProvisioningProfile(at: provisionDestination)
+                // A wrong password used to be accepted here and only failed later, while signing.
+                p12Info = try CertificateService.inspectP12(at: p12Destination, password: password)
+                if !profileInfo.developerCertificates.isEmpty,
+                   !profileInfo.developerCertificates.contains(p12Info.certificateData) {
+                    throw CertificateServiceError.profileMismatch
+                }
+            } catch {
+                try? fileManager.removeItem(at: p12Destination)
+                try? fileManager.removeItem(at: provisionDestination)
+                throw error
+            }
 
-            let profileInfo = try CertificateService.inspectProvisioningProfile(at: provisionDestination)
-            let p12Info = try? CertificateService.inspectP12(at: p12Destination, password: password)
+            // The certificate can run out before the profile does.
+            let expiry = [profileInfo.expirationDate, p12Info.expirationDate].compactMap { $0 }.min()
 
             var certificate = SigningCertificate(
                 id: id,
                 name: name,
                 teamName: profileInfo.teamName,
                 teamIdentifier: profileInfo.teamIdentifier,
-                issuedAt: p12Info?.issuedDate,
-                expiresAt: profileInfo.expirationDate,
+                issuedAt: p12Info.issuedDate,
+                expiresAt: expiry,
                 p12FileName: p12FileName,
                 provisionFileName: provisionFileName,
                 provisionedDeviceCount: profileInfo.deviceCount,
@@ -158,10 +173,15 @@ final class CertificateStore: ObservableObject {
     }
 
     func refreshHealth(for certificate: SigningCertificate) async {
-        guard let index = certificates.firstIndex(where: { $0.id == certificate.id }) else { return }
         if let profileInfo = try? CertificateService.inspectProvisioningProfile(at: provisionURL(for: certificate)) {
+            let p12Expiry = password(for: certificate)
+                .flatMap { try? CertificateService.inspectP12(at: p12URL(for: certificate), password: $0) }?
+                .expirationDate
+            let expiry = [profileInfo.expirationDate, p12Expiry].compactMap { $0 }.min()
             await MainActor.run {
-                certificates[index].expiresAt = profileInfo.expirationDate
+                // Look the index up here, the list may have changed while the profile was read.
+                guard let index = certificates.firstIndex(where: { $0.id == certificate.id }) else { return }
+                certificates[index].expiresAt = expiry
                 certificates[index].teamName = profileInfo.teamName
                 certificates[index].provisionedDeviceCount = profileInfo.deviceCount
                 certificates[index].lastRevocationCheck = Date()

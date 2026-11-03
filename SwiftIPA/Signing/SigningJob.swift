@@ -27,6 +27,8 @@ final class SigningJob: Identifiable, ObservableObject {
     let certificateID: UUID
 
     @Published var status: SigningJobStatus = .queued
+    /// zsign's output when signing failed, shown under "Show Log".
+    @Published var log: String?
 
     init(appEntryID: UUID, sourceIPAURL: URL, displayName: String, options: SigningOptions, certificateID: UUID) {
         self.appEntryID = appEntryID

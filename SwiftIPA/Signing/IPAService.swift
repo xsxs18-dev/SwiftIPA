@@ -91,79 +91,123 @@ enum IPAService {
         guard let plist = InfoPlistPatcher.read(at: extracted.infoPlistURL) else {
             throw IPAServiceError.noInfoPlist
         }
-
-        let name = (plist["CFBundleDisplayName"] as? String) ?? (plist["CFBundleName"] as? String) ?? extracted.appFolder.deletingPathExtension().lastPathComponent
-        let bundleID = (plist["CFBundleIdentifier"] as? String) ?? ""
-        let version = (plist["CFBundleShortVersionString"] as? String) ?? "1.0"
-        let build = (plist["CFBundleVersion"] as? String) ?? "1"
-        let minimumOS = (plist["MinimumOSVersion"] as? String) ?? ""
-
-        var schemes: [String] = []
-        if let urlTypes = plist["CFBundleURLTypes"] as? [[String: Any]] {
-            for entry in urlTypes {
-                if let names = entry["CFBundleURLSchemes"] as? [String] {
-                    schemes.append(contentsOf: names)
-                }
-            }
-        }
-
         let fileManager = FileManager.default
         let watchExists = fileManager.fileExists(atPath: extracted.appFolder.appendingPathComponent("Watch").path)
         let pluginsFolder = extracted.appFolder.appendingPathComponent("PlugIns")
         let plugins = (try? fileManager.contentsOfDirectory(atPath: pluginsFolder.path)) ?? []
-
-        return AppMetadata(
-            name: name,
-            bundleIdentifier: bundleID,
-            version: version,
-            build: build,
-            minimumOSVersion: minimumOS,
-            urlSchemes: schemes,
+        return metadata(
+            fromPlist: plist,
+            fallbackName: extracted.appFolder.deletingPathExtension().lastPathComponent,
             hasWatchApp: watchExists,
             plugins: plugins
         )
     }
 
-    static func extractIcon(from extracted: ExtractedApp) -> Data? {
-        guard let plist = InfoPlistPatcher.read(at: extracted.infoPlistURL) else { return nil }
+    private static func metadata(fromPlist plist: [String: Any], fallbackName: String, hasWatchApp: Bool, plugins: [String]) -> AppMetadata {
+        let name = (plist["CFBundleDisplayName"] as? String) ?? (plist["CFBundleName"] as? String) ?? fallbackName
+        var schemes: [String] = []
+        for entry in (plist["CFBundleURLTypes"] as? [[String: Any]]) ?? [] {
+            schemes.append(contentsOf: (entry["CFBundleURLSchemes"] as? [String]) ?? [])
+        }
+        return AppMetadata(
+            name: name,
+            bundleIdentifier: (plist["CFBundleIdentifier"] as? String) ?? "",
+            version: (plist["CFBundleShortVersionString"] as? String) ?? "1.0",
+            build: (plist["CFBundleVersion"] as? String) ?? "1",
+            minimumOSVersion: (plist["MinimumOSVersion"] as? String) ?? "",
+            urlSchemes: schemes,
+            hasWatchApp: hasWatchApp,
+            plugins: plugins
+        )
+    }
+
+    /// Reads the metadata and icon straight from the archive instead of
+    /// unpacking it, so importing a big IPA doesn't need its size again in free
+    /// space. `verifyChecksums` reads every file once to check its CRC, which
+    /// catches a broken download here instead of after signing.
+    static func inspectArchive(at ipaURL: URL, verifyChecksums: Bool = true) throws -> (metadata: AppMetadata, icon: Data?) {
+        let archive: Archive
+        do {
+            archive = try Archive(url: ipaURL, accessMode: .read)
+        } catch {
+            throw IPAServiceError.notAnIPA
+        }
+
+        var appPrefix: String?
+        var appFolderName = ""
+        for entry in archive where entry.type == .file {
+            let parts = entry.path.split(separator: "/", omittingEmptySubsequences: false)
+            if parts.count == 3, parts[0] == "Payload", parts[1].hasSuffix(".app"), parts[2] == "Info.plist" {
+                appFolderName = String(parts[1])
+                appPrefix = "Payload/\(appFolderName)/"
+                break
+            }
+        }
+        guard let appPrefix, let plistEntry = archive[appPrefix + "Info.plist"] else {
+            throw IPAServiceError.noAppBundleFound
+        }
+        guard let plistData = try? readEntry(plistEntry, in: archive),
+              let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any] else {
+            throw IPAServiceError.noInfoPlist
+        }
+
+        var hasWatchApp = false
+        var plugins = Set<String>()
+        var rootFiles: [String: Entry] = [:]
+        for entry in archive {
+            if verifyChecksums, entry.type == .file {
+                let checksum: CRC32
+                do {
+                    checksum = try archive.extract(entry, skipCRC32: false) { _ in }
+                } catch {
+                    throw IPAServiceError.extractionFailed
+                }
+                if checksum != entry.checksum { throw IPAServiceError.extractionFailed }
+            }
+            guard entry.path.hasPrefix(appPrefix) else { continue }
+            let inner = entry.path.dropFirst(appPrefix.count)
+            if inner.hasPrefix("Watch/") { hasWatchApp = true }
+            if inner.hasPrefix("PlugIns/") {
+                let name = inner.dropFirst("PlugIns/".count).split(separator: "/").first.map(String.init)
+                if let name, name.hasSuffix(".appex") { plugins.insert(name) }
+            }
+            if entry.type == .file, !inner.contains("/") { rootFiles[String(inner)] = entry }
+        }
+
+        let metadata = metadata(
+            fromPlist: plist,
+            fallbackName: (appFolderName as NSString).deletingPathExtension,
+            hasWatchApp: hasWatchApp,
+            plugins: plugins.sorted()
+        )
+        let icon = bestIcon(plist: plist, candidates: rootFiles.keys.sorted()) { name in
+            rootFiles[name].flatMap { try? readEntry($0, in: archive) }
+        }
+        return (metadata, icon)
+    }
+
+    private static func readEntry(_ entry: Entry, in archive: Archive) throws -> Data {
+        var data = Data()
+        _ = try archive.extract(entry, skipCRC32: true) { data.append($0) }
+        return data
+    }
+
+    /// The biggest PNG named like the app's icon files, or any "AppIcon" PNG.
+    private static func bestIcon(plist: [String: Any], candidates: [String], load: (String) -> Data?) -> Data? {
         let icons = plist["CFBundleIcons"] as? [String: Any]
         let primary = icons?["CFBundlePrimaryIcon"] as? [String: Any]
-        let files = (primary?["CFBundleIconFiles"] as? [String]) ?? []
+        let iconFiles = (primary?["CFBundleIconFiles"] as? [String]) ?? []
+        let pngs = candidates.filter { $0.lowercased().hasSuffix(".png") }
+        var named = pngs.filter { name in iconFiles.contains { name.hasPrefix($0) } }
+        if named.isEmpty { named = pngs.filter { $0.lowercased().contains("appicon") } }
 
-        let fileManager = FileManager.default
-        let candidates = (try? fileManager.contentsOfDirectory(atPath: extracted.appFolder.path)) ?? []
-
-        var bestURL: URL?
-        var bestSize = -1
-
-        for base in files {
-            for candidate in candidates where candidate.hasPrefix(base) && candidate.hasSuffix(".png") {
-                let url = extracted.appFolder.appendingPathComponent(candidate)
-                if let image = UIImage(contentsOfFile: url.path) {
-                    let size = Int(image.size.width * image.size.height)
-                    if size > bestSize {
-                        bestSize = size
-                        bestURL = url
-                    }
-                }
-            }
+        var best: (data: Data, pixels: Int)?
+        for name in named {
+            guard let data = load(name), let image = UIImage(data: data) else { continue }
+            let pixels = Int(image.size.width * image.scale * image.size.height * image.scale)
+            if pixels > (best?.pixels ?? -1) { best = (data, pixels) }
         }
-
-        if bestURL == nil {
-            for candidate in candidates where candidate.lowercased().contains("appicon") && candidate.hasSuffix(".png") {
-                let url = extracted.appFolder.appendingPathComponent(candidate)
-                if let image = UIImage(contentsOfFile: url.path) {
-                    let size = Int(image.size.width * image.size.height)
-                    if size > bestSize {
-                        bestSize = size
-                        bestURL = url
-                    }
-                }
-            }
-        }
-
-        guard let iconURL = bestURL else { return nil }
-        return try? Data(contentsOf: iconURL)
+        return best?.data
     }
 
     /// `compress: false` stores files without deflate. The IPA gets bigger but

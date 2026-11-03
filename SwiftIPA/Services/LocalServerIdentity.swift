@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(ZSignKit)
+import ZSignKit // xtool/SwiftPM build; Xcode uses the bridging header
+#endif
 import Security
 import Network
 
@@ -24,7 +27,19 @@ enum LocalServerIdentity {
     }
 
     static func ensureIdentity() throws -> (identity: SecIdentity, certificate: SecCertificate, password: String) {
-        let password = existingPassword() ?? newPassword()
+        do {
+            return try loadOrCreateIdentity()
+        } catch {
+            // The password lives in the keychain (this device only) and the .p12 in
+            // Documents. After restoring a backup to another phone they no longer
+            // match, so start over with a new identity instead of failing every time.
+            try? FileManager.default.removeItem(at: p12URL)
+            return try loadOrCreateIdentity(forceNewPassword: true)
+        }
+    }
+
+    private static func loadOrCreateIdentity(forceNewPassword: Bool = false) throws -> (identity: SecIdentity, certificate: SecCertificate, password: String) {
+        let password = (forceNewPassword ? nil : existingPassword()) ?? newPassword()
 
         if !FileManager.default.fileExists(atPath: p12URL.path) {
             var errorMessage: NSString?

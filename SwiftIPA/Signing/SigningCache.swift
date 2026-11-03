@@ -5,6 +5,8 @@ struct SigningCacheEntry: Codable {
     var ipaFileName: String
     var createdAt: Date
     var byteSize: Int64
+    /// The bundle ID the cached build was signed with. Missing in entries from before 1.8.
+    var bundleIdentifier: String?
 }
 
 final class SigningCache {
@@ -26,7 +28,7 @@ final class SigningCache {
         FileHashing.sha256(of: "\(sourceHash)|\(optionsFingerprint)|\(certificateFingerprint)")
     }
 
-    func cachedIPA(for key: String) -> URL? {
+    func cachedIPA(for key: String) -> (url: URL, bundleIdentifier: String?)? {
         queue.sync {
             var index = readIndex()
             guard let entry = index[key] else { return nil }
@@ -36,11 +38,11 @@ final class SigningCache {
                 writeIndex(index)
                 return nil
             }
-            return fileURL
+            return (fileURL, entry.bundleIdentifier)
         }
     }
 
-    func store(key: String, ipaURL: URL) {
+    func store(key: String, ipaURL: URL, bundleIdentifier: String?) {
         queue.sync {
             var index = readIndex()
             let fileName = "\(key).ipa"
@@ -48,7 +50,7 @@ final class SigningCache {
             guard (try? FileManager.default.replaceItem(at: destination, withItemAt: ipaURL)) != nil else { return }
 
             let size = (try? FileManager.default.attributesOfItem(atPath: destination.path)[.size] as? Int64) ?? 0
-            index[key] = SigningCacheEntry(key: key, ipaFileName: fileName, createdAt: Date(), byteSize: size)
+            index[key] = SigningCacheEntry(key: key, ipaFileName: fileName, createdAt: Date(), byteSize: size, bundleIdentifier: bundleIdentifier)
             writeIndex(index)
             evictIfNeeded(index: &index)
         }

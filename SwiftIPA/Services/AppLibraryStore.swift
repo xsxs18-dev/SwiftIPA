@@ -18,8 +18,20 @@ final class AppLibraryStore: ObservableObject {
         apps = load()
     }
 
+    /// The IPA to install or export: the signed build if there is one.
     func ipaURL(for entry: AppEntry) -> URL {
+        if let signed = entry.signedFileName { return folder.appendingPathComponent(signed) }
+        return originalIPAURL(for: entry)
+    }
+
+    /// The IPA as it was imported. Signing always starts from this one, so
+    /// signing again doesn't pile changes (suffixes, tweaks) on top of the last build.
+    func originalIPAURL(for entry: AppEntry) -> URL {
         folder.appendingPathComponent(entry.fileName)
+    }
+
+    private func files(of entry: AppEntry) -> [URL] {
+        [entry.fileName, entry.signedFileName, entry.iconFileName].compactMap { $0 }.map { folder.appendingPathComponent($0) }
     }
 
     func iconURL(for entry: AppEntry) -> URL? {
@@ -53,15 +65,29 @@ final class AppLibraryStore: ObservableObject {
         let destination = folder.appendingPathComponent(fileName)
         try fileManager.copyItem(at: sourceURL, to: destination)
 
-        let extracted = try IPAService.extract(ipaURL: destination)
-        defer { extracted.cleanUp() }
-        let metadata = try IPAService.metadata(from: extracted)
+        let inspection: (metadata: AppMetadata, icon: Data?)
+        do {
+            inspection = try IPAService.inspectArchive(at: destination)
+        } catch {
+            // Don't leave a broken copy behind in the library folder.
+            try? fileManager.removeItem(at: destination)
+            throw error
+        }
+        let metadata = inspection.metadata
 
         var iconFileName: String?
-        if let iconData = IPAService.extractIcon(from: extracted) {
+        if let iconData = inspection.icon {
             let name = "\(id.uuidString)-icon.png"
             try? iconData.write(to: folder.appendingPathComponent(name))
             iconFileName = name
+        }
+
+        // Files opened from other apps get copied into Documents/Inbox, which
+        // would otherwise keep a second copy of every shared IPA.
+        let inbox = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Inbox", isDirectory: true).standardizedFileURL.path
+        if sourceURL.standardizedFileURL.path.hasPrefix(inbox + "/") {
+            try? fileManager.removeItem(at: sourceURL)
         }
 
         let size = (try? fileManager.attributesOfItem(atPath: destination.path)[.size] as? Int64) ?? 0
@@ -84,7 +110,10 @@ final class AppLibraryStore: ObservableObject {
     /// `bundleIdentifier` is the ID the app was actually signed with. It's nil
     /// when the result came from the cache, then it gets worked out again here.
     func markSigned(_ entryID: UUID, signedIPAURL: URL, bundleIdentifier: String?, options: SigningOptions, certificateID: UUID) async throws {
-        guard let destination = await MainActor.run(body: { apps.first(where: { $0.id == entryID }).map(ipaURL) }) else { return }
+        guard let entry = await MainActor.run(body: { apps.first(where: { $0.id == entryID }) }) else { return }
+        // The signed build goes next to the original, which stays as it was imported.
+        let signedFileName = entry.hasOriginal ? "\(entry.id.uuidString)-signed.ipa" : entry.fileName
+        let destination = folder.appendingPathComponent(signedFileName)
 
         try await Task.detached(priority: .userInitiated) {
             try FileManager.default.replaceItem(at: destination, withItemAt: signedIPAURL)
@@ -94,6 +123,7 @@ final class AppLibraryStore: ObservableObject {
 
         await MainActor.run {
             guard let index = apps.firstIndex(where: { $0.id == entryID }) else { return }
+            if apps[index].hasOriginal { apps[index].signedFileName = signedFileName }
             apps[index].byteSize = size
             apps[index].signedAt = Date()
             apps[index].certificateID = certificateID
@@ -113,10 +143,7 @@ final class AppLibraryStore: ObservableObject {
     }
 
     func remove(_ entry: AppEntry) {
-        try? FileManager.default.removeItem(at: ipaURL(for: entry))
-        if let iconURL = iconURL(for: entry) {
-            try? FileManager.default.removeItem(at: iconURL)
-        }
+        for url in files(of: entry) { try? FileManager.default.removeItem(at: url) }
         withAnimation(.easeOut(duration: 0.25)) {
             apps.removeAll { $0.id == entry.id }
         }
@@ -125,10 +152,7 @@ final class AppLibraryStore: ObservableObject {
 
     func removeAll(where predicate: (AppEntry) -> Bool) {
         for entry in apps where predicate(entry) {
-            try? FileManager.default.removeItem(at: ipaURL(for: entry))
-            if let iconURL = iconURL(for: entry) {
-                try? FileManager.default.removeItem(at: iconURL)
-            }
+            for url in files(of: entry) { try? FileManager.default.removeItem(at: url) }
         }
         withAnimation(.easeOut(duration: 0.25)) {
             apps.removeAll(where: predicate)

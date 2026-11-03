@@ -60,8 +60,9 @@ struct SourceDetailView: View {
                         downloadedBytes = bytesWritten
                     }
                 }
+                // Also when the import fails, otherwise the download stays in tmp.
+                defer { try? FileManager.default.removeItem(at: url) }
                 let entry = try await AppLibraryStore.shared.importIPA(at: url, sourceName: source?.name)
-                try? FileManager.default.removeItem(at: url)
                 await MainActor.run {
                     downloadingID = nil
                     signEntryID = entry.id
