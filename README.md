@@ -3,10 +3,7 @@
 
   # SwiftIPA
 
-  An IPA signer that runs on your iPhone.
-
-  [![Platform](https://img.shields.io/badge/platform-iOS%2016%2B-FF9F0A?style=flat-square&logo=apple&logoColor=white&labelColor=000000)](#)
-  [![License](https://img.shields.io/badge/license-MIT-FF9F0A?style=flat-square&labelColor=000000)](LICENSE)
+  An IPA signer that runs on your iPhone (iOS 16+).
 
 </div>
 
