@@ -15,7 +15,7 @@
       "category": "utilities",
       "version": "1.8.0",
       "versionDate": "2026-11-03",
-      "versionDescription": "- feat: signing log, export the original IPA, sort the library\n- fix: sign from the original IPA, working cache, certificate checks, install and import fixes\n- build: local builds with xtool, zsign and OpenSSL pinned to fixed versions\n- Rewrite README in plain language [skip ci]\n- Clean up release descriptions [skip ci]\n- Update AltStore source for build 38\n- Fix incoming IPA sharing with direct document imports\n- Update AltStore source for build 37\n- feat: pick a custom app icon when signing\n- Update AltStore source for build 36\n- Update AltStore source for build 35\n- ci: build pull requests without publishing a release\n- feat: cleaner UI and a Bugs & Issues page in Settings\n- feat: faster signing and bundle ID from certificate\n- feat: inject .deb tweaks, with ElleKit linked in automatically",
+      "versionDescription": "- feat: signing log, export the original IPA, sort the library\n- fix: sign from the original IPA, working cache, certificate checks, install and import fixes\n- build: local builds with xtool, zsign and OpenSSL pinned to fixed versions",
       "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-40/SwiftIPA-unsigned.ipa",
       "size": 3260940,
       "minOSVersion": "16.0",
@@ -23,7 +23,7 @@
         {
           "version": "1.8.0",
           "date": "2026-11-03",
-          "localizedDescription": "- feat: signing log, export the original IPA, sort the library\n- fix: sign from the original IPA, working cache, certificate checks, install and import fixes\n- build: local builds with xtool, zsign and OpenSSL pinned to fixed versions\n- Rewrite README in plain language [skip ci]\n- Clean up release descriptions [skip ci]\n- Update AltStore source for build 38\n- Fix incoming IPA sharing with direct document imports\n- Update AltStore source for build 37\n- feat: pick a custom app icon when signing\n- Update AltStore source for build 36\n- Update AltStore source for build 35\n- ci: build pull requests without publishing a release\n- feat: cleaner UI and a Bugs & Issues page in Settings\n- feat: faster signing and bundle ID from certificate\n- feat: inject .deb tweaks, with ElleKit linked in automatically",
+          "localizedDescription": "- feat: signing log, export the original IPA, sort the library\n- fix: sign from the original IPA, working cache, certificate checks, install and import fixes\n- build: local builds with xtool, zsign and OpenSSL pinned to fixed versions",
           "downloadURL": "https://github.com/xsxs18-dev/SwiftIPA/releases/download/build-40/SwiftIPA-unsigned.ipa",
           "size": 3260940,
           "minOSVersion": "16.0"
