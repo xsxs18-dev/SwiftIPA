@@ -7,6 +7,7 @@ struct AppDetailView: View {
     @State private var showingInspector = false
     @State private var showingRename = false
     @State private var showingShareSheet = false
+    @State private var showingOriginalShareSheet = false
     @State private var showingInstall = false
     @State private var inspectionError: String?
     @Environment(\.dismiss) private var dismiss
@@ -69,6 +70,14 @@ struct AppDetailView: View {
                     Label("Export IPA", systemImage: "square.and.arrow.up")
                 }
 
+                if entry.isSigned && entry.hasOriginal {
+                    Button {
+                        showingOriginalShareSheet = true
+                    } label: {
+                        Label("Export Original IPA", systemImage: "doc.zipper")
+                    }
+                }
+
                 Button {
                     inspect(entry)
                 } label: {
@@ -100,6 +109,9 @@ struct AppDetailView: View {
                     if let certificate = CertificateStore.shared.certificate(withID: entry.certificateID) {
                         LabeledContent("Certificate", value: certificate.name)
                     }
+                    if entry.hasOriginal {
+                        LabeledContent("Original IPA", value: originalSize(for: entry))
+                    }
                 }
             }
         }
@@ -122,6 +134,9 @@ struct AppDetailView: View {
         .sheet(isPresented: $showingShareSheet) {
             ShareSheet(items: [library.ipaURL(for: entry)])
         }
+        .sheet(isPresented: $showingOriginalShareSheet) {
+            ShareSheet(items: [library.originalIPAURL(for: entry)])
+        }
         .overlay(alignment: .bottom) {
             if showingInstall {
                 InstallStatusPill(entryID: entry.id) {
@@ -139,6 +154,12 @@ struct AppDetailView: View {
     }
 
     @State private var inspectionReport: InspectionReport?
+
+    private func originalSize(for entry: AppEntry) -> String {
+        let path = library.originalIPAURL(for: entry).path
+        let bytes = (try? FileManager.default.attributesOfItem(atPath: path)[.size] as? Int64) ?? 0
+        return ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
 
     private func inspect(_ entry: AppEntry) {
         do {

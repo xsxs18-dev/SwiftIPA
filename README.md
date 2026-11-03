@@ -14,6 +14,7 @@ There's no account and no tracking. The app only goes online when you ask it to:
 ## Features
 
 - Change the bundle ID, name, version, build, minimum iOS version, icon and entitlements, or take the bundle ID straight from your certificate's provisioning profile
+- The imported IPA stays untouched. Signing always starts from it, so signing again with other settings doesn't stack changes, and you can export the original any time
 - Re-signing the same app with the same certificate and settings is almost instant, because the result gets cached
 - Fast Packaging (on by default) skips compressing the signed IPA, so signing big apps takes a fraction of the time
 - Sign several apps in one go
@@ -22,6 +23,9 @@ There's no account and no tracking. The app only goes online when you ask it to:
 - Remove extensions, the Watch app or the embedded profile, force file sharing, and a few more tweaks like that
 - Add AltStore or ESign sources and pull apps from them
 - See when a certificate is about to expire, with a reminder a few days before
+- Adding a certificate checks the .p12 password and that the .p12 belongs to the provisioning profile
+- If signing fails, Show Log has zsign's full output to copy or share
+- Sort the library by name, size, or when an app was added or signed
 - Look inside an IPA before signing it (architectures, encryption, linked libraries, extensions)
 - Six color themes, English and German
 - Report bugs from Settings → Bugs & Issues, which opens a prefilled issue on GitHub
@@ -66,14 +70,24 @@ xcodegen generate
 open SwiftIPA.xcodeproj
 ```
 
-The fetch script downloads zsign and the OpenSSL headers into `Vendor/`, which isn't checked in. The app talks to zsign through one small Objective-C++ file (`Signing/ZSign/ZSignBridge.mm`), everything else is Swift and SwiftUI.
+The fetch script downloads zsign and the OpenSSL headers into `Vendor/`, which isn't checked in. Both are pinned to fixed versions in the script. The app talks to zsign through one small Objective-C++ file (`ZSignKit/ZSignBridge.mm`), everything else is Swift and SwiftUI.
+
+### With xtool (Linux or macOS)
+
+With [xtool](https://xtool.sh) and its Darwin SDK set up:
+
+```bash
+./Scripts/xtool-build.sh            # unsigned IPA in xtool/SwiftIPA.ipa
+./Scripts/xtool-build.sh install    # build, sign and install on the connected iPhone
+```
+
+This uses `Package.swift` and `xtool.yml`. Release builds still come from `project.yml` on GitHub Actions. The xtool build has no German strings yet, because the String Catalog can't be compiled outside Xcode.
 
 ## Known issues
 
-- `.deb` tweaks only work if they're gzip-compressed. For `xz` or `zstd` ones, extract the `.dylib` and import that instead.
+- `.deb` tweaks work with gzip and xz compression. For `zstd` or `bzip2` ones, extract the `.dylib` and import that instead.
 - Installing needs api.palera.in to be reachable. If it's down, use Export IPA for now.
 - Revoked certificates are only detected through the profile and expiry date, the app doesn't ask Apple directly.
-- The Share Sheet extension is English only.
 - No special iPad layout yet.
 
 Found a bug or have an idea? Open an issue, I read all of them.

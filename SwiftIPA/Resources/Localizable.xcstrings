@@ -3290,6 +3290,126 @@
           }
         }
       }
+    },
+    "Signing Log": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signier-Log"
+          }
+        }
+      }
+    },
+    "Show Log": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log anzeigen"
+          }
+        }
+      }
+    },
+    "Copy Log": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log kopieren"
+          }
+        }
+      }
+    },
+    "zsign didn't print anything.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "zsign hat nichts ausgegeben."
+          }
+        }
+      }
+    },
+    "Export Original IPA": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Original-IPA exportieren"
+          }
+        }
+      }
+    },
+    "Original IPA": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Original-IPA"
+          }
+        }
+      }
+    },
+    "Recently Added": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt hinzugefügt"
+          }
+        }
+      }
+    },
+    "Recently Signed": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt signiert"
+          }
+        }
+      }
+    },
+    "Size": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Größe"
+          }
+        }
+      }
+    },
+    "Sort By": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortieren nach"
+          }
+        }
+      }
+    },
+    "The install was cancelled.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Installation wurde abgebrochen."
+          }
+        }
+      }
+    },
+    "This .p12 certificate isn't part of the provisioning profile. Apps signed with this pair won't install. Pick the profile that belongs to this certificate.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses .p12-Zertifikat gehört nicht zum Provisioning-Profil. Damit signierte Apps lassen sich nicht installieren. Wähle das Profil, das zu diesem Zertifikat gehört."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

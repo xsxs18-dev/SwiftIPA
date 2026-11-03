@@ -1,6 +1,38 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+enum LibrarySortOrder: String, CaseIterable, Identifiable {
+    case recentlyAdded
+    case recentlySigned
+    case name
+    case size
+
+    var id: String { rawValue }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .recentlyAdded: return "Recently Added"
+        case .recentlySigned: return "Recently Signed"
+        case .name: return "Name"
+        case .size: return "Size"
+        }
+    }
+
+    func sorted(_ apps: [AppEntry]) -> [AppEntry] {
+        switch self {
+        case .recentlyAdded:
+            return apps.sorted { $0.importedAt > $1.importedAt }
+        case .recentlySigned:
+            // Unsigned apps last, newest import first among them.
+            return apps.sorted { ($0.signedAt ?? .distantPast, $0.importedAt) > ($1.signedAt ?? .distantPast, $1.importedAt) }
+        case .name:
+            return apps.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        case .size:
+            return apps.sorted { $0.byteSize > $1.byteSize }
+        }
+    }
+}
+
 struct LibraryView: View {
     @ObservedObject private var library = AppLibraryStore.shared
     @State private var searchText = ""
@@ -12,10 +44,12 @@ struct LibraryView: View {
     @State private var importError: String?
     @State private var isImporting = false
     @State private var importingCount = 0
+    @AppStorage("SwiftIPA.librarySortOrder") private var sortOrder: LibrarySortOrder = .recentlyAdded
 
     private var filteredApps: [AppEntry] {
-        guard !searchText.isEmpty else { return library.apps }
-        return library.apps.filter {
+        let apps = sortOrder.sorted(library.apps)
+        guard !searchText.isEmpty else { return apps }
+        return apps.filter {
             $0.name.localizedCaseInsensitiveContains(searchText) ||
             $0.bundleIdentifier.localizedCaseInsensitiveContains(searchText)
         }
@@ -53,6 +87,18 @@ struct LibraryView: View {
                     Button("Sign All") { showingBatchSheet = true }
                         .disabled(selection.isEmpty)
                 } else {
+                    if library.apps.count > 1 {
+                        Menu {
+                            Picker("Sort By", selection: $sortOrder) {
+                                ForEach(LibrarySortOrder.allCases) { order in
+                                    Text(order.title).tag(order)
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down")
+                        }
+                        .accessibilityLabel(Text("Sort By"))
+                    }
                     Menu {
                         Button {
                             showingImporter = true

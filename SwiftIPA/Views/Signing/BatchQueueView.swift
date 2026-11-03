@@ -72,7 +72,9 @@ struct BatchQueueView: View {
 
     private func start() {
         guard let certificateID else { return }
-        let options = presetID.flatMap { id in presetStore.presets.first { $0.id == id }?.options } ?? SigningOptions()
+        // Without a preset, use the default signing options from Settings like a single sign does.
+        let options = presetID.flatMap { id in presetStore.presets.first { $0.id == id }?.options }
+            ?? DefaultSigningOptionsStore.shared.options
 
         jobs = entryIDs.compactMap { id -> SigningJob? in
             guard let entry = library.apps.first(where: { $0.id == id }) else { return nil }
@@ -82,7 +84,7 @@ struct BatchQueueView: View {
             if entryOptions.build.isEmpty { entryOptions.build = entry.build }
             return SigningJob(
                 appEntryID: entry.id,
-                sourceIPAURL: library.ipaURL(for: entry),
+                sourceIPAURL: library.originalIPAURL(for: entry),
                 displayName: entry.name,
                 options: entryOptions,
                 certificateID: certificateID
@@ -101,6 +103,7 @@ struct BatchQueueView: View {
 
 private struct BatchJobRow: View {
     @ObservedObject var job: SigningJob
+    @State private var showingLog = false
 
     var body: some View {
         HStack {
@@ -109,7 +112,16 @@ private struct BatchJobRow: View {
             statusView
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if case .failed = job.status { showingLog = true }
+        }
         .animation(.easeOut(duration: 0.2), value: job.status)
+        .sheet(isPresented: $showingLog) {
+            if case .failed(let message) = job.status {
+                SigningLogView(title: job.displayName, message: message, log: job.log ?? "")
+            }
+        }
     }
 
     @ViewBuilder
@@ -124,7 +136,11 @@ private struct BatchJobRow: View {
         case .done(let seconds):
             StatusBadge(text: seconds < 0.05 ? String(localized: "Instant") : String(format: "%.1fs", seconds), color: SIColor.success)
         case .failed:
-            StatusBadge(text: String(localized: "Failed"), color: SIColor.danger)
+            HStack(spacing: 4) {
+                StatusBadge(text: String(localized: "Failed"), color: SIColor.danger)
+                // Tap the row for the message and zsign's log.
+                Image(systemName: "info.circle").foregroundStyle(SIColor.danger)
+            }
         }
     }
 }

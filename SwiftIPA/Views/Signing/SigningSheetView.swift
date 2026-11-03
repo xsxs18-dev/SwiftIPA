@@ -16,6 +16,8 @@ struct SigningSheetView: View {
     @State private var isSigning = false
     @State private var jobStatus: SigningJobStatus = .queued
     @State private var errorMessage: String?
+    @State private var failureLog: String?
+    @State private var showingLog = false
     @State private var showingSavePreset = false
     @State private var presetName = ""
     @State private var pickedIconItem: PhotosPickerItem?
@@ -73,6 +75,9 @@ struct SigningSheetView: View {
                 loadPickedIcon(newItem)
             }
             .alert("Signing Failed", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+                if failureLog != nil {
+                    Button("Show Log") { showingLog = true }
+                }
                 Button("OK") { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
@@ -81,6 +86,9 @@ struct SigningSheetView: View {
                 Button("OK") { iconImportError = nil }
             } message: {
                 Text(iconImportError ?? "")
+            }
+            .sheet(isPresented: $showingLog) {
+                SigningLogView(title: entry?.name ?? "", message: errorMessage ?? String(localized: "Signing failed."), log: failureLog ?? "")
             }
             .sheet(isPresented: $showingSavePreset) {
                 NameInputSheet(title: String(localized: "Save Preset"), placeholder: String(localized: "Preset name"), text: "", confirmTitle: String(localized: "Save")) { name in
@@ -322,7 +330,7 @@ struct SigningSheetView: View {
 
         let job = SigningJob(
             appEntryID: entry.id,
-            sourceIPAURL: library.ipaURL(for: entry),
+            sourceIPAURL: library.originalIPAURL(for: entry),
             displayName: entry.name,
             options: options,
             certificateID: certificateID
@@ -338,6 +346,7 @@ struct SigningSheetView: View {
             await MainActor.run {
                 isSigning = false
                 if case .failed(let message) = job.status {
+                    failureLog = job.log
                     errorMessage = message
                 } else {
                     let shouldInstall = options.installAfterSigning
