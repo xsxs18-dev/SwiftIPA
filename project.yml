@@ -8,10 +8,11 @@ options:
 packages:
   ZIPFoundation:
     url: https://github.com/weichsel/ZIPFoundation.git
-    from: 0.9.19
+    exactVersion: 0.9.20
+  # Keep in sync with OPENSSL_TAG in Scripts/fetch-dependencies.sh (headers) and Package.resolved.
   OpenSSL:
     url: https://github.com/krzyzanowskim/OpenSSL.git
-    from: 3.3.2000
+    exactVersion: 3.6.5000
 settings:
   base:
     SWIFT_VERSION: "5.0"
@@ -25,6 +26,8 @@ targets:
     platform: iOS
     sources:
       - path: SwiftIPA
+      - path: ZSignKit/ZSignBridge.mm
+      - path: ZSignKit/include
       - path: Vendor/zsign/src
         optional: true
         excludes:
@@ -37,6 +40,7 @@ targets:
           - "**/metadata.h"
           - "third-party/**"
           - "**/common_win32.h"
+    # The xtool build reads the same keys from Support/xtool-Info.plist, keep both in sync.
     info:
       path: SwiftIPA/Resources/Info.plist
       properties:
@@ -67,7 +71,7 @@ targets:
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         CFBundleVersion: "0"
-        CFBundleShortVersionString: "1.7.2"
+        CFBundleShortVersionString: "1.8.0"
         CFBundleLocalizations:
           - en
           - de
@@ -91,6 +95,7 @@ targets:
           - $(SRCROOT)/Vendor/zsign/src
           - $(SRCROOT)/Vendor/zsign/src/common
           - $(SRCROOT)/Vendor/openssl-include
+          - $(SRCROOT)/ZSignKit/include
         GCC_PREPROCESSOR_DEFINITIONS:
           - $(inherited)
           - SWIFTIPA_HAS_ZSIGN=1

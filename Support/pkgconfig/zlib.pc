@@ -1,0 +1,8 @@
+# ZIPFoundation asks pkg-config for zlib when the build host isn't an Apple
+# platform (xtool on Linux). The host's zlib.pc would add -L/usr/lib64, which
+# breaks the iOS link, so this one only links the SDK's libz.
+Name: zlib
+Description: zlib from the iOS SDK
+Version: 1.2.12
+Libs: -lz
+Cflags:

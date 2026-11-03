@@ -1,0 +1,5 @@
+version: 1
+bundleID: com.xsxs18.SwiftIPA
+infoPath: Support/xtool-Info.plist
+iconPath: SwiftIPA/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+skipLSP: true

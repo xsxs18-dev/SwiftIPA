@@ -29,6 +29,7 @@
 #if SWIFTIPA_HAS_ZSIGN
 + (NSString *)captureStdoutDuringBlock:(void (^)(void))block;
 + (nullable NSString *)lastErrorLineFromCapturedOutput:(NSString *)output;
++ (NSString *)plainTextFromCapturedOutput:(NSString *)output;
 #endif
 @end
 
@@ -87,6 +88,13 @@
     }
     return trimmed.length > 0 ? trimmed : nil;
 }
+
++ (NSString *)plainTextFromCapturedOutput:(NSString *)output {
+    if (output.length == 0) return @"";
+    NSRegularExpression *colors = [NSRegularExpression regularExpressionWithPattern:@"\x1b\\[[0-9;]*m" options:0 error:nil];
+    NSString *plain = colors ? [colors stringByReplacingMatchesInString:output options:0 range:NSMakeRange(0, output.length) withTemplate:@""] : output;
+    return [plain stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
 #endif
 
 + (BOOL)isEngineAvailable {
@@ -101,6 +109,15 @@
     ZSignResult *result = [ZSignResult new];
 
 #if SWIFTIPA_HAS_ZSIGN
+    // zsign prints to stdout, which captureStdoutDuringBlock redirects for the
+    // whole process. Two signs at once would swap each other's pipes and the
+    // second reader would wait forever. SigningEngine already runs one at a
+    // time, this keeps any other caller from doing it.
+    static NSLock *signLock;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ signLock = [NSLock new]; });
+    [signLock lock];
+
     CFTimeInterval started = CACurrentMediaTime();
 
     __block bool prepared = false;
@@ -155,7 +172,10 @@
         );
     }];
 
+    [signLock unlock];
+
     result.duration = CACurrentMediaTime() - started;
+    result.log = [self plainTextFromCapturedOutput:capturedOutput];
     NSString *detail = [self lastErrorLineFromCapturedOutput:capturedOutput];
 
     if (!prepared) {

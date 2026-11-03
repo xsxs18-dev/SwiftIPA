@@ -13,6 +13,8 @@ typedef NS_ENUM(NSInteger, ZSignResultCode) {
 @interface ZSignResult : NSObject
 @property (nonatomic, assign) ZSignResultCode code;
 @property (nonatomic, copy, nullable) NSString *message;
+/// Everything zsign printed while signing, without color codes.
+@property (nonatomic, copy, nullable) NSString *log;
 @property (nonatomic, assign) NSTimeInterval duration;
 @end
 

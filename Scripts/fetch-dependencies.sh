@@ -5,21 +5,28 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENDOR="$ROOT/Vendor"
 ZSIGN_DIR="$VENDOR/zsign"
 ZSIGN_REPO="https://github.com/zhlynn/zsign.git"
-ZSIGN_REF="${ZSIGN_REF:-master}"
+# Pinned so a change on zsign's master can't break the build or signing unnoticed.
+# To update: set a newer commit here, build, sign a few apps, then commit.
+ZSIGN_REF="${ZSIGN_REF:-9299685bab7ef99827e06e5dfda93af747386590}"
 OPENSSL_INCLUDE_DIR="$VENDOR/openssl-include/openssl"
-OPENSSL_RELEASE_API="https://api.github.com/repos/krzyzanowskim/OpenSSL/releases/latest"
+# Must match the OpenSSL package version in project.yml and Package.swift.
+OPENSSL_TAG="${OPENSSL_TAG:-3.6.5000}"
+OPENSSL_RELEASE_API="https://api.github.com/repos/krzyzanowskim/OpenSSL/releases/tags/$OPENSSL_TAG"
 
 mkdir -p "$VENDOR"
 
-if [ -d "$ZSIGN_DIR/.git" ]; then
-  echo "==> Updating zsign"
-  git -C "$ZSIGN_DIR" fetch --depth 1 origin "$ZSIGN_REF"
-  git -C "$ZSIGN_DIR" checkout -q FETCH_HEAD
-else
+if [ ! -d "$ZSIGN_DIR/.git" ]; then
   echo "==> Cloning zsign"
   rm -rf "$ZSIGN_DIR"
-  git clone --depth 1 --branch "$ZSIGN_REF" "$ZSIGN_REPO" "$ZSIGN_DIR"
+  git init -q "$ZSIGN_DIR"
+  git -C "$ZSIGN_DIR" remote add origin "$ZSIGN_REPO"
 fi
+echo "==> Checking out zsign $ZSIGN_REF"
+git -C "$ZSIGN_DIR" fetch -q --depth 1 origin "$ZSIGN_REF"
+git -C "$ZSIGN_DIR" checkout -q FETCH_HEAD
+
+# The SwiftPM/xtool build (Package.swift) expects zsign's sources here.
+ln -sfn ../Vendor/zsign/src "$ROOT/ZSignKit/zsign"
 
 echo "==> Checking the sources SwiftIPA expects"
 for file in src/bundle.cpp src/bundle.h src/openssl.cpp src/openssl.h src/macho.cpp src/macho.h src/archo.cpp src/archo.h src/signing.cpp src/signing.h src/common/common.h src/common/mach-o.h; do
@@ -72,5 +79,5 @@ cp "$HEADERS_SRC"/*.h "$OPENSSL_INCLUDE_DIR/"
 
 echo
 echo "Done. Now run:"
-echo "  xcodegen generate"
-echo "  open SwiftIPA.xcodeproj"
+echo "  xcodegen generate && open SwiftIPA.xcodeproj    (Xcode)"
+echo "  Scripts/xtool-build.sh                           (xtool, e.g. on Linux)"

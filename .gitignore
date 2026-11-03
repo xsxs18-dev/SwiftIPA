@@ -6,3 +6,8 @@ Payload/
 *.ipa
 xcuserdata/
 Vendor/
+.build/
+.swiftpm/
+.xtool/
+xtool/
+ZSignKit/zsign
